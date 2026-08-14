@@ -3,9 +3,11 @@
   "name": "Daikin WiFi Watchdog",
   "codeowners": [],
   "config_flow": true,
-  "documentation": "https://github.com/local/daikin-wifi-watchdog",
+  "documentation": "https://github.com/nicdive/daikin-HA-watchdog",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/local/daikin-wifi-watchdog/issues",
+  "issue_tracker": "https://github.com/nicdive/daikin-HA-watchdog/issues",
   "version": "1.1.0",
-  "after_dependencies": ["daikin"]
+  "after_dependencies": [
+    "daikin"
+  ]
 }
