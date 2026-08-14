@@ -1,0 +1,20 @@
+reboot:
+  name: Reboot WiFi module
+  description: Soft-reboot a Daikin WiFi module discovered from the Daikin AC integration.
+  fields:
+    entry_id:
+      name: Daikin config entry ID
+      description: Optional. Config entry id of the official Daikin AC device.
+      example: 01JABCDEF...
+      selector:
+        text:
+    host:
+      name: Host
+      description: Optional. IP/hostname of the WiFi module.
+      example: 192.168.1.50
+      selector:
+        text:
+
+check_now:
+  name: Check now
+  description: Run a health check cycle immediately for all discovered Daikin modules.

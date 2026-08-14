@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Daikin WiFi Watchdog",
+        "description": "Automatically monitors WiFi modules from the official **Daikin AC** integration ({daikin_count} found).",
+        "data": {
+          "check_interval": "Check interval (seconds)",
+          "failures_before_reboot": "Failures before auto reboot",
+          "auto_reboot": "Automatic reboot"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Daikin WiFi Watchdog is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Daikin WiFi Watchdog options",
+        "description": "Optional switches enable a power-cycle when the module is completely unreachable.",
+        "data": {
+          "check_interval": "Check interval (seconds)",
+          "failures_before_reboot": "Failures before auto reboot",
+          "auto_reboot": "Automatic reboot",
+          "reboot_cooldown": "Cooldown after reboot (seconds)",
+          "max_soft_reboots_per_day": "Max soft reboots / day / module",
+          "http_timeout": "HTTP timeout (seconds)"
+        }
+      }
+    }
+  }
+}

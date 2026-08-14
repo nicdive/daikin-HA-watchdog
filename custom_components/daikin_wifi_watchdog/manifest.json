@@ -1,0 +1,11 @@
+{
+  "domain": "daikin_wifi_watchdog",
+  "name": "Daikin WiFi Watchdog",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/local/daikin-wifi-watchdog",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/local/daikin-wifi-watchdog/issues",
+  "version": "1.1.0",
+  "after_dependencies": ["daikin"]
+}

@@ -1,0 +1,80 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Daikin WiFi Watchdog",
+        "description": "Surveille automatiquement les modules WiFi des climatisations déjà ajoutées via l'intégration officielle **Daikin AC** ({daikin_count} détectée(s)).",
+        "data": {
+          "check_interval": "Intervalle de contrôle (secondes)",
+          "failures_before_reboot": "Échecs avant reboot auto",
+          "auto_reboot": "Reboot automatique"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Le watchdog Daikin est déjà configuré"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options Daikin WiFi Watchdog",
+        "description": "Les prises (switch) optionnelles permettent un power-cycle si le module est totalement injoignable.",
+        "data": {
+          "check_interval": "Intervalle de contrôle (secondes)",
+          "failures_before_reboot": "Échecs avant reboot auto",
+          "auto_reboot": "Reboot automatique",
+          "reboot_cooldown": "Cooldown après reboot (secondes)",
+          "max_soft_reboots_per_day": "Max soft reboots / jour / module",
+          "http_timeout": "Timeout HTTP (secondes)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "healthy": {
+        "name": "Module WiFi OK"
+      }
+    },
+    "sensor": {
+      "wifi_status": {
+        "name": "État WiFi"
+      },
+      "wifi_error_code": {
+        "name": "Code erreur WiFi"
+      },
+      "wifi_last_reboot": {
+        "name": "Dernier reboot WiFi"
+      },
+      "wifi_soft_reboots_today": {
+        "name": "Soft reboots aujourd'hui"
+      }
+    },
+    "button": {
+      "reboot_wifi": {
+        "name": "Redémarrer le module WiFi"
+      }
+    }
+  },
+  "services": {
+    "reboot": {
+      "name": "Redémarrer le module WiFi",
+      "description": "Soft-reboot d'un module WiFi Daikin.",
+      "fields": {
+        "entry_id": {
+          "name": "ID entrée Daikin",
+          "description": "ID de l'entrée Daikin AC (optionnel)."
+        },
+        "host": {
+          "name": "Hôte",
+          "description": "IP du module (optionnel)."
+        }
+      }
+    },
+    "check_now": {
+      "name": "Vérifier maintenant",
+      "description": "Lance immédiatement un cycle de surveillance."
+    }
+  }
+}
