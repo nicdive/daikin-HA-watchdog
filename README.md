@@ -24,6 +24,14 @@ Puis redémarre HA.
 
 Aucune saisie d’IP manuelle.
 
+## Entités globales
+| Entité | Rôle |
+|--------|------|
+| `switch.*_watchdog_enabled` | Active / coupe toute la surveillance |
+| `switch.*_notifications_enabled` | Active / coupe les notifs plantage & reboot vers le mobile |
+
+Dans les options de l’intégration, sélectionne ton **notify Companion** (ex. `notify.mobile_app_iphone_17`).
+
 ## Entités créées (par clim)
 | Entité | Rôle |
 |--------|------|

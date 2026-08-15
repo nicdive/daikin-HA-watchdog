@@ -7,7 +7,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 
@@ -18,16 +18,42 @@ from .const import (
     CONF_HARD_REBOOT_SWITCHES,
     CONF_HTTP_TIMEOUT,
     CONF_MAX_SOFT_REBOOTS_PER_DAY,
+    CONF_NOTIFICATIONS_ENABLED,
+    CONF_NOTIFY_SERVICE,
     CONF_REBOOT_COOLDOWN,
+    CONF_WATCHDOG_ENABLED,
     DAIKIN_DOMAIN,
     DEFAULT_AUTO_REBOOT,
     DEFAULT_CHECK_INTERVAL,
     DEFAULT_FAILURES_BEFORE_REBOOT,
     DEFAULT_HTTP_TIMEOUT,
     DEFAULT_MAX_SOFT_REBOOTS_PER_DAY,
+    DEFAULT_NOTIFICATIONS_ENABLED,
     DEFAULT_REBOOT_COOLDOWN,
+    DEFAULT_WATCHDOG_ENABLED,
     DOMAIN,
 )
+
+
+def _guess_iphone_notify(hass: HomeAssistant) -> str:
+    """Best-effort match for an iPhone Companion notify target."""
+    services = hass.services.async_services().get("notify", {})
+    preferred = []
+    fallback = []
+    for name in services:
+        lower = name.lower()
+        entity = f"notify.{name}"
+        if "iphone" in lower or "iphone17" in lower or "iphone_17" in lower:
+            preferred.append(entity)
+        elif lower.startswith("mobile_app_"):
+            fallback.append(entity)
+    if preferred:
+        # Prefer names that look like iphone 17
+        for entity in preferred:
+            if "17" in entity.lower():
+                return entity
+        return preferred[0]
+    return fallback[0] if fallback else ""
 
 
 class DaikinWifiWatchdogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -43,6 +69,7 @@ class DaikinWifiWatchdogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         daikin_entries = self.hass.config_entries.async_entries(DAIKIN_DOMAIN)
         if user_input is not None:
+            notify = user_input.get(CONF_NOTIFY_SERVICE) or _guess_iphone_notify(self.hass)
             return self.async_create_entry(
                 title="Daikin WiFi Watchdog",
                 data={},
@@ -58,23 +85,42 @@ class DaikinWifiWatchdogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_MAX_SOFT_REBOOTS_PER_DAY: DEFAULT_MAX_SOFT_REBOOTS_PER_DAY,
                     CONF_HTTP_TIMEOUT: DEFAULT_HTTP_TIMEOUT,
                     CONF_HARD_REBOOT_SWITCHES: {},
+                    CONF_WATCHDOG_ENABLED: DEFAULT_WATCHDOG_ENABLED,
+                    CONF_NOTIFICATIONS_ENABLED: user_input.get(
+                        CONF_NOTIFICATIONS_ENABLED, DEFAULT_NOTIFICATIONS_ENABLED
+                    ),
+                    CONF_NOTIFY_SERVICE: notify,
                 },
+            )
+
+        guessed = _guess_iphone_notify(self.hass)
+        schema: dict[Any, Any] = {
+            vol.Required(
+                CONF_CHECK_INTERVAL, default=DEFAULT_CHECK_INTERVAL
+            ): vol.All(vol.Coerce(int), vol.Range(min=15, max=3600)),
+            vol.Required(
+                CONF_FAILURES_BEFORE_REBOOT,
+                default=DEFAULT_FAILURES_BEFORE_REBOOT,
+            ): vol.All(vol.Coerce(int), vol.Range(min=1, max=20)),
+            vol.Required(CONF_AUTO_REBOOT, default=DEFAULT_AUTO_REBOOT): bool,
+            vol.Required(
+                CONF_NOTIFICATIONS_ENABLED, default=DEFAULT_NOTIFICATIONS_ENABLED
+            ): bool,
+        }
+        if guessed:
+            schema[vol.Optional(CONF_NOTIFY_SERVICE, default=guessed)] = (
+                selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="notify", multiple=False)
+                )
+            )
+        else:
+            schema[vol.Optional(CONF_NOTIFY_SERVICE)] = selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="notify", multiple=False)
             )
 
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_CHECK_INTERVAL, default=DEFAULT_CHECK_INTERVAL
-                    ): vol.All(vol.Coerce(int), vol.Range(min=15, max=3600)),
-                    vol.Required(
-                        CONF_FAILURES_BEFORE_REBOOT,
-                        default=DEFAULT_FAILURES_BEFORE_REBOOT,
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=20)),
-                    vol.Required(CONF_AUTO_REBOOT, default=DEFAULT_AUTO_REBOOT): bool,
-                }
-            ),
+            data_schema=vol.Schema(schema),
             description_placeholders={
                 "daikin_count": str(len(daikin_entries)),
             },
@@ -89,7 +135,7 @@ class DaikinWifiWatchdogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
-    """Options flow including optional hard-reboot switch mapping."""
+    """Options flow including notify target and hard-reboot mapping."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -117,9 +163,21 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
                     ],
                     CONF_HTTP_TIMEOUT: user_input[CONF_HTTP_TIMEOUT],
                     CONF_HARD_REBOOT_SWITCHES: hard_map,
+                    CONF_WATCHDOG_ENABLED: current.get(
+                        CONF_WATCHDOG_ENABLED, DEFAULT_WATCHDOG_ENABLED
+                    ),
+                    CONF_NOTIFICATIONS_ENABLED: current.get(
+                        CONF_NOTIFICATIONS_ENABLED, DEFAULT_NOTIFICATIONS_ENABLED
+                    ),
+                    CONF_NOTIFY_SERVICE: user_input.get(CONF_NOTIFY_SERVICE)
+                    or current.get(CONF_NOTIFY_SERVICE)
+                    or "",
                 },
             )
 
+        notify_default = current.get(CONF_NOTIFY_SERVICE) or _guess_iphone_notify(
+            self.hass
+        )
         schema: dict[Any, Any] = {
             vol.Required(
                 CONF_CHECK_INTERVAL,
@@ -150,6 +208,16 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
                 default=current.get(CONF_HTTP_TIMEOUT, DEFAULT_HTTP_TIMEOUT),
             ): vol.All(vol.Coerce(int), vol.Range(min=2, max=60)),
         }
+        if notify_default:
+            schema[vol.Optional(CONF_NOTIFY_SERVICE, default=notify_default)] = (
+                selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="notify", multiple=False)
+                )
+            )
+        else:
+            schema[vol.Optional(CONF_NOTIFY_SERVICE)] = selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="notify", multiple=False)
+            )
 
         hard_current = current.get(CONF_HARD_REBOOT_SWITCHES) or {}
         for entry in daikin_entries:

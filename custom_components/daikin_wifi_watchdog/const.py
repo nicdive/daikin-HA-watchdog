@@ -12,6 +12,9 @@ CONF_REBOOT_COOLDOWN = "reboot_cooldown"
 CONF_MAX_SOFT_REBOOTS_PER_DAY = "max_soft_reboots_per_day"
 CONF_HARD_REBOOT_SWITCHES = "hard_reboot_switches"
 CONF_HTTP_TIMEOUT = "http_timeout"
+CONF_WATCHDOG_ENABLED = "watchdog_enabled"
+CONF_NOTIFICATIONS_ENABLED = "notifications_enabled"
+CONF_NOTIFY_SERVICE = "notify_service"
 
 DEFAULT_CHECK_INTERVAL = 60
 DEFAULT_FAILURES_BEFORE_REBOOT = 3
@@ -19,6 +22,8 @@ DEFAULT_AUTO_REBOOT = True
 DEFAULT_REBOOT_COOLDOWN = 120
 DEFAULT_MAX_SOFT_REBOOTS_PER_DAY = 6
 DEFAULT_HTTP_TIMEOUT = 8
+DEFAULT_WATCHDOG_ENABLED = True
+DEFAULT_NOTIFICATIONS_ENABLED = True
 
 ERROR_CODES_UNHEALTHY = {255}
 
@@ -33,4 +38,4 @@ ATTR_LAST_REBOOT = "last_reboot"
 SERVICE_REBOOT = "reboot"
 SERVICE_CHECK_NOW = "check_now"
 
-PLATFORMS = ["binary_sensor", "button", "sensor"]
+PLATFORMS = ["binary_sensor", "button", "sensor", "switch"]

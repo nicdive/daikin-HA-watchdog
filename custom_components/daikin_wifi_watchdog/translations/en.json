@@ -7,7 +7,9 @@
         "data": {
           "check_interval": "Check interval (seconds)",
           "failures_before_reboot": "Failures before auto reboot",
-          "auto_reboot": "Automatic reboot"
+          "auto_reboot": "Automatic reboot",
+          "notifications_enabled": "Crash/reboot notifications",
+          "notify_service": "Mobile notify target (e.g. iPhone)"
         }
       }
     },
@@ -19,15 +21,26 @@
     "step": {
       "init": {
         "title": "Daikin WiFi Watchdog options",
-        "description": "Optional switches enable a power-cycle when the module is completely unreachable.",
+        "description": "Pick your Companion notify target (iPhone). Optional switches enable a power-cycle when unreachable.",
         "data": {
           "check_interval": "Check interval (seconds)",
           "failures_before_reboot": "Failures before auto reboot",
           "auto_reboot": "Automatic reboot",
           "reboot_cooldown": "Cooldown after reboot (seconds)",
           "max_soft_reboots_per_day": "Max soft reboots / day / module",
-          "http_timeout": "HTTP timeout (seconds)"
+          "http_timeout": "HTTP timeout (seconds)",
+          "notify_service": "Mobile notify target (e.g. iPhone)"
         }
+      }
+    }
+  },
+  "entity": {
+    "switch": {
+      "watchdog_enabled": {
+        "name": "Watchdog enabled"
+      },
+      "notifications_enabled": {
+        "name": "Crash/reboot notifications"
       }
     }
   }

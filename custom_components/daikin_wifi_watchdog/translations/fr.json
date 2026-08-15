@@ -7,7 +7,9 @@
         "data": {
           "check_interval": "Intervalle de contrôle (secondes)",
           "failures_before_reboot": "Échecs avant reboot auto",
-          "auto_reboot": "Reboot automatique"
+          "auto_reboot": "Reboot automatique",
+          "notifications_enabled": "Notifications plantage/reboot",
+          "notify_service": "Notify mobile (ex. iPhone)"
         }
       }
     },
@@ -19,14 +21,15 @@
     "step": {
       "init": {
         "title": "Options Daikin WiFi Watchdog",
-        "description": "Les prises (switch) optionnelles permettent un power-cycle si le module est totalement injoignable.",
+        "description": "Choisis ton notify Companion (iPhone). Les prises optionnelles permettent un power-cycle si le module est injoignable.",
         "data": {
           "check_interval": "Intervalle de contrôle (secondes)",
           "failures_before_reboot": "Échecs avant reboot auto",
           "auto_reboot": "Reboot automatique",
           "reboot_cooldown": "Cooldown après reboot (secondes)",
           "max_soft_reboots_per_day": "Max soft reboots / jour / module",
-          "http_timeout": "Timeout HTTP (secondes)"
+          "http_timeout": "Timeout HTTP (secondes)",
+          "notify_service": "Notify mobile (ex. iPhone)"
         }
       }
     }
@@ -54,6 +57,14 @@
     "button": {
       "reboot_wifi": {
         "name": "Redémarrer le module WiFi"
+      }
+    },
+    "switch": {
+      "watchdog_enabled": {
+        "name": "Watchdog activé"
+      },
+      "notifications_enabled": {
+        "name": "Notifications plantage/reboot"
       }
     }
   },

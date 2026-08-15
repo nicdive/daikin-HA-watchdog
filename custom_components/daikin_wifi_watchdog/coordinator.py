@@ -30,14 +30,19 @@ from .const import (
     CONF_HARD_REBOOT_SWITCHES,
     CONF_HTTP_TIMEOUT,
     CONF_MAX_SOFT_REBOOTS_PER_DAY,
+    CONF_NOTIFICATIONS_ENABLED,
+    CONF_NOTIFY_SERVICE,
     CONF_REBOOT_COOLDOWN,
+    CONF_WATCHDOG_ENABLED,
     DAIKIN_DOMAIN,
     DEFAULT_AUTO_REBOOT,
     DEFAULT_CHECK_INTERVAL,
     DEFAULT_FAILURES_BEFORE_REBOOT,
     DEFAULT_HTTP_TIMEOUT,
     DEFAULT_MAX_SOFT_REBOOTS_PER_DAY,
+    DEFAULT_NOTIFICATIONS_ENABLED,
     DEFAULT_REBOOT_COOLDOWN,
+    DEFAULT_WATCHDOG_ENABLED,
     DOMAIN,
     ERROR_CODES_UNHEALTHY,
 )
@@ -147,10 +152,71 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
             _LOGGER.debug("No Daikin AC config entries found to monitor")
             return {}
 
-        snapshots: dict[str, ModuleSnapshot] = {}
+        if not bool(self.options.get(CONF_WATCHDOG_ENABLED, DEFAULT_WATCHDOG_ENABLED)):
+            _LOGGER.debug("Watchdog disabled — skipping health checks")
+            snapshots: dict[str, ModuleSnapshot] = {}
+            for module in modules:
+                state = self._state_for(module.entry_id)
+                result = state.last_result or HealthResult(
+                    status=HealthStatus.OK,
+                    host=module.host,
+                    detail="watchdog_disabled",
+                )
+                snap = self._snapshot(module, state, result)
+                snap.attributes = {
+                    **snap.attributes,
+                    "watchdog_enabled": False,
+                    "detail": "watchdog_disabled",
+                }
+                snapshots[module.entry_id] = snap
+            return snapshots
+
+        snapshots = {}
         for module in modules:
             snapshots[module.entry_id] = await self._check_and_recover(module)
         return snapshots
+
+    @property
+    def notifications_enabled(self) -> bool:
+        return bool(
+            self.options.get(CONF_NOTIFICATIONS_ENABLED, DEFAULT_NOTIFICATIONS_ENABLED)
+        )
+
+    async def _async_notify(self, title: str, message: str) -> None:
+        if not self.notifications_enabled:
+            return
+        target = (self.options.get(CONF_NOTIFY_SERVICE) or "").strip()
+        if not target:
+            _LOGGER.debug("Notifications enabled but no notify target configured")
+            return
+
+        service_name = target.removeprefix("notify.")
+        try:
+            if self.hass.services.has_service("notify", service_name):
+                await self.hass.services.async_call(
+                    "notify",
+                    service_name,
+                    {"title": title, "message": message},
+                    blocking=False,
+                )
+                return
+            if target.startswith("notify.") and self.hass.services.has_service(
+                "notify", "send_message"
+            ):
+                await self.hass.services.async_call(
+                    "notify",
+                    "send_message",
+                    {
+                        "entity_id": target,
+                        "title": title,
+                        "message": message,
+                    },
+                    blocking=False,
+                )
+                return
+            _LOGGER.warning("Notify target introuvable: %s", target)
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("Failed to send mobile notification: %s", exc)
 
     async def _check_and_recover(self, module: TrackedModule) -> ModuleSnapshot:
         state = self._state_for(module.entry_id)
@@ -175,6 +241,10 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
                     module.host,
                     state.consecutive_failures,
                 )
+                await self._async_notify(
+                    "Daikin WiFi OK",
+                    f"{module.title} est de nouveau joignable ({module.host}).",
+                )
             state.consecutive_failures = 0
             return self._snapshot(module, state, result)
 
@@ -192,6 +262,12 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
             state.consecutive_failures,
             failures_needed,
         )
+
+        if state.consecutive_failures == 1:
+            await self._async_notify(
+                "Daikin WiFi planté",
+                f"{module.title} ({module.host}) : {result.status.value} — {result.detail}",
+            )
 
         if auto and state.consecutive_failures >= failures_needed:
             await self._recover(module, state, result.status)
@@ -271,6 +347,10 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
                 ATTR_DETAIL: detail,
             },
         )
+        await self._async_notify(
+            "Daikin WiFi reboot",
+            f"Soft reboot de {module.title} ({module.host}) — {'OK' if ok else 'échec'}: {detail}",
+        )
         # Ask official integration to reconnect after cooldown window starts.
         self.hass.async_create_task(self._reload_daikin_entry(module.entry_id, delay=cooldown))
 
@@ -323,6 +403,11 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
                 "ok": ok,
                 ATTR_DETAIL: detail,
             },
+        )
+        await self._async_notify(
+            "Daikin WiFi hard reboot",
+            f"Power-cycle de {module.title} ({module.host}) raison={reason} — "
+            f"{'OK' if ok else 'échec'}: {detail}",
         )
         self.hass.async_create_task(
             self._reload_daikin_entry(module.entry_id, delay=max(cooldown, 180))
