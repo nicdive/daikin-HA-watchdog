@@ -22,7 +22,9 @@ Puis redémarre HA.
 2. Ajoute l’intégration **Daikin WiFi Watchdog**
 3. Elle détecte toute seule les IP/MAC des entries `daikin`
 
-Aucune saisie d’IP manuelle.
+Aucune saisie d’IP manuelle. Les identifiants locaux (mot de passe / UUID) déjà stockés par Daikin AC sont réutilisés.
+
+Dans les options, tu peux associer une **prise par climatisation** (le formulaire affiche le nom de l’unité) et choisir ton **notify Companion**.
 
 ## Entités globales
 | Entité | Rôle |
@@ -30,30 +32,38 @@ Aucune saisie d’IP manuelle.
 | `switch.*_watchdog_enabled` | Active / coupe toute la surveillance |
 | `switch.*_notifications_enabled` | Active / coupe les notifs plantage & reboot vers le mobile |
 
-Dans les options de l’intégration, sélectionne ton **notify Companion** (ex. `notify.mobile_app_iphone_17`).
-
 ## Entités créées (par clim)
 | Entité | Rôle |
 |--------|------|
 | `binary_sensor.*_wifi_healthy` | OK / HS |
-| `sensor.*_wifi_status` | `ok` / `error_code` / `unreachable` |
+| `sensor.*_wifi_status` | `ok` / `error_code` / `unreachable` / `rebooting` / … |
 | `sensor.*_wifi_error_code` | ex. `255` |
-| `sensor.*_wifi_last_reboot` | timestamp |
-| `sensor.*_wifi_soft_reboots_today` | compteur journalier |
-| `button.*_reboot_wifi_module` | reboot manuel |
+| `sensor.*_wifi_last_reboot` | timestamp (conservé après redémarrage de HA) |
+| `sensor.*_wifi_soft_reboots_today` | compteur journalier (persisté) |
+| `sensor.*_wifi_consecutive_failures` | échecs d’affilée avant reboot |
+| `button.*_reboot_wifi_module` | reboot logiciel manuel |
+| `button.*_hard_reboot_wifi_module` | power-cycle si une prise est configurée |
+
+Un export **Diagnostics** est disponible sur l’entrée d’intégration (utile pour un ticket).
 
 ## Comportement
-1. Poll `http://IP/common/basic_info` (IP lue depuis Daikin AC)
-2. Si `err=255` ou injoignable → compteur d’échecs
-3. Après N échecs → soft reboot `GET /common/reboot`
-4. Recharge ensuite l’entrée Daikin AC pour reconnecter l’intégration
-5. Optionnel : prise `switch.*` en secours (power-cycle) dans les options
+1. Poll parallèle `http(s)://IP/common/basic_info` (IP + auth lues depuis Daikin AC)
+2. Un timeout unique est retenté 1 s plus tard pour éviter les faux positifs
+3. Si `err=255` ou injoignable → compteur d’échecs
+4. Après N échecs → soft reboot `GET /common/reboot` (les timeouts/coupures TCP pendant le reboot sont considérés comme un succès)
+5. Recharge ensuite l’entrée Daikin AC pour reconnecter l’intégration
+6. Optionnel : prise `switch.*` en secours (power-cycle, durée réglable)
+7. Quota journalier, cooldown, et issues HA si le module reste injoignable sans prise
 
 ## Services
 ```yaml
 service: daikin_wifi_watchdog.check_now
 
 service: daikin_wifi_watchdog.reboot
+data:
+  host: 192.168.1.50
+
+service: daikin_wifi_watchdog.hard_reboot
 data:
   host: 192.168.1.50
 ```
@@ -63,10 +73,12 @@ data:
 - Nombre d’échecs avant reboot
 - Auto-reboot on/off
 - Cooldown / quota journalier
-- Switch de hard-reboot par module Daikin
+- Durée d’extinction de la prise
+- Rechargement Daikin AC après reboot
+- Switch de hard-reboot **par** module Daikin (étape dédiée avec le nom de la clim)
 
 ## Prérequis
-- Modules avec **API locale** (BRP069A/B, Emura classiques)
+- Modules avec **API locale** (BRP069A/B, Emura classiques, BRP072C avec UUID)
 - Intégration officielle **Daikin AC** déjà configurée
 
 Les modules cloud-only (certains BRP069C) ne répondent souvent plus à `/common/reboot` : configure alors une prise dans les options.

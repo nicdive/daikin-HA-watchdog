@@ -6,38 +6,55 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
+from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
+from .const import DOMAIN, STATUS_OPTIONS
 from .coordinator import DaikinWatchdogCoordinator
 from .entity import DaikinWatchdogEntity
 
 STATUS = SensorEntityDescription(
     key="wifi_status",
-    name="WiFi status",
+    translation_key="wifi_status",
     icon="mdi:wifi",
+    device_class=SensorDeviceClass.ENUM,
+    options=STATUS_OPTIONS,
 )
 
 ERROR_CODE = SensorEntityDescription(
     key="wifi_error_code",
-    name="WiFi error code",
+    translation_key="wifi_error_code",
     icon="mdi:alert-circle-outline",
+    entity_category=EntityCategory.DIAGNOSTIC,
 )
 
 LAST_REBOOT = SensorEntityDescription(
     key="wifi_last_reboot",
-    name="WiFi last reboot",
+    translation_key="wifi_last_reboot",
     device_class=SensorDeviceClass.TIMESTAMP,
+    entity_category=EntityCategory.DIAGNOSTIC,
 )
 
 REBOOTS_TODAY = SensorEntityDescription(
     key="wifi_soft_reboots_today",
-    name="WiFi soft reboots today",
+    translation_key="wifi_soft_reboots_today",
     icon="mdi:restart",
+    state_class=SensorStateClass.TOTAL,
+    entity_category=EntityCategory.DIAGNOSTIC,
+)
+
+FAILURES = SensorEntityDescription(
+    key="wifi_consecutive_failures",
+    translation_key="wifi_consecutive_failures",
+    icon="mdi:counter",
+    state_class=SensorStateClass.MEASUREMENT,
+    entity_category=EntityCategory.DIAGNOSTIC,
 )
 
 
@@ -52,7 +69,7 @@ async def async_setup_entry(
     @callback
     def _add_entities() -> None:
         new: list[SensorEntity] = []
-        for daikin_entry_id in (coordinator.data or {}):
+        for daikin_entry_id in coordinator.data or {}:
             if daikin_entry_id in known:
                 continue
             known.add(daikin_entry_id)
@@ -62,6 +79,7 @@ async def async_setup_entry(
                     DaikinWifiErrorCodeSensor(coordinator, daikin_entry_id),
                     DaikinWifiLastRebootSensor(coordinator, daikin_entry_id),
                     DaikinWifiRebootsTodaySensor(coordinator, daikin_entry_id),
+                    DaikinWifiFailuresSensor(coordinator, daikin_entry_id),
                 ]
             )
         if new:
@@ -71,13 +89,27 @@ async def async_setup_entry(
     entry.async_on_unload(coordinator.async_add_listener(_add_entities))
 
 
-class DaikinWifiStatusSensor(DaikinWatchdogEntity, SensorEntity):
-    entity_description = STATUS
+class _WatchdogSensor(DaikinWatchdogEntity, SensorEntity):
+    def __init__(
+        self,
+        coordinator: DaikinWatchdogCoordinator,
+        daikin_entry_id: str,
+        description: SensorEntityDescription,
+    ) -> None:
+        super().__init__(
+            coordinator,
+            daikin_entry_id,
+            description.key,
+            translation_key=description.translation_key,
+        )
+        self.entity_description = description
 
+
+class DaikinWifiStatusSensor(_WatchdogSensor):
     def __init__(
         self, coordinator: DaikinWatchdogCoordinator, daikin_entry_id: str
     ) -> None:
-        super().__init__(coordinator, daikin_entry_id, STATUS.key)
+        super().__init__(coordinator, daikin_entry_id, STATUS)
 
     @property
     def native_value(self) -> StateType:
@@ -90,13 +122,11 @@ class DaikinWifiStatusSensor(DaikinWatchdogEntity, SensorEntity):
         return snap.attributes if snap else None
 
 
-class DaikinWifiErrorCodeSensor(DaikinWatchdogEntity, SensorEntity):
-    entity_description = ERROR_CODE
-
+class DaikinWifiErrorCodeSensor(_WatchdogSensor):
     def __init__(
         self, coordinator: DaikinWatchdogCoordinator, daikin_entry_id: str
     ) -> None:
-        super().__init__(coordinator, daikin_entry_id, ERROR_CODE.key)
+        super().__init__(coordinator, daikin_entry_id, ERROR_CODE)
 
     @property
     def native_value(self) -> StateType:
@@ -104,29 +134,41 @@ class DaikinWifiErrorCodeSensor(DaikinWatchdogEntity, SensorEntity):
         return snap.error_code if snap else None
 
 
-class DaikinWifiLastRebootSensor(DaikinWatchdogEntity, SensorEntity):
-    entity_description = LAST_REBOOT
-
+class DaikinWifiLastRebootSensor(_WatchdogSensor):
     def __init__(
         self, coordinator: DaikinWatchdogCoordinator, daikin_entry_id: str
     ) -> None:
-        super().__init__(coordinator, daikin_entry_id, LAST_REBOOT.key)
+        super().__init__(coordinator, daikin_entry_id, LAST_REBOOT)
 
     @property
     def native_value(self):
         snap = self.snapshot
-        return snap.last_reboot if snap else None
+        if snap is None or snap.last_reboot is None:
+            return None
+        if snap.last_reboot.tzinfo is None:
+            return snap.last_reboot.replace(tzinfo=dt_util.UTC)
+        return snap.last_reboot
 
 
-class DaikinWifiRebootsTodaySensor(DaikinWatchdogEntity, SensorEntity):
-    entity_description = REBOOTS_TODAY
-
+class DaikinWifiRebootsTodaySensor(_WatchdogSensor):
     def __init__(
         self, coordinator: DaikinWatchdogCoordinator, daikin_entry_id: str
     ) -> None:
-        super().__init__(coordinator, daikin_entry_id, REBOOTS_TODAY.key)
+        super().__init__(coordinator, daikin_entry_id, REBOOTS_TODAY)
 
     @property
     def native_value(self) -> StateType:
         snap = self.snapshot
         return snap.soft_reboots_today if snap else None
+
+
+class DaikinWifiFailuresSensor(_WatchdogSensor):
+    def __init__(
+        self, coordinator: DaikinWatchdogCoordinator, daikin_entry_id: str
+    ) -> None:
+        super().__init__(coordinator, daikin_entry_id, FAILURES)
+
+    @property
+    def native_value(self) -> StateType:
+        snap = self.snapshot
+        return snap.consecutive_failures if snap else None

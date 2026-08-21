@@ -20,6 +20,8 @@ class DaikinWatchdogEntity(CoordinatorEntity[DaikinWatchdogCoordinator]):
         coordinator: DaikinWatchdogCoordinator,
         daikin_entry_id: str,
         key: str,
+        *,
+        translation_key: str | None = None,
     ) -> None:
         super().__init__(coordinator)
         self._daikin_entry_id = daikin_entry_id
@@ -41,6 +43,8 @@ class DaikinWatchdogEntity(CoordinatorEntity[DaikinWatchdogCoordinator]):
             device_info["configuration_url"] = f"http://{host}/common/basic_info"
         self._attr_device_info = device_info
         self._attr_unique_id = f"{daikin_entry_id}_{key}"
+        if translation_key:
+            self._attr_translation_key = translation_key
 
     @property
     def snapshot(self) -> ModuleSnapshot | None:

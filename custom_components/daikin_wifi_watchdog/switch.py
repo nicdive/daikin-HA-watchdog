@@ -23,14 +23,14 @@ from .coordinator import DaikinWatchdogCoordinator
 
 WATCHDOG_SWITCH = SwitchEntityDescription(
     key="watchdog_enabled",
-    name="Watchdog enabled",
+    translation_key="watchdog_enabled",
     icon="mdi:dog-service",
     entity_category=EntityCategory.CONFIG,
 )
 
 NOTIFICATIONS_SWITCH = SwitchEntityDescription(
     key="notifications_enabled",
-    name="Crash/reboot notifications",
+    translation_key="notifications_enabled",
     icon="mdi:cellphone-message",
     entity_category=EntityCategory.CONFIG,
 )
@@ -81,6 +81,7 @@ class DaikinWatchdogToggleSwitch(SwitchEntity, RestoreEntity):
         self._option_key = option_key
         self._default = default
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
+        self._attr_translation_key = description.translation_key
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name="Daikin WiFi Watchdog",

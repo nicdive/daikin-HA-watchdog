@@ -9,7 +9,7 @@
           "failures_before_reboot": "Failures before auto reboot",
           "auto_reboot": "Automatic reboot",
           "notifications_enabled": "Crash/reboot notifications",
-          "notify_service": "Mobile notify target (e.g. iPhone)"
+          "notify_service": "Mobile notify target"
         }
       }
     },
@@ -21,7 +21,7 @@
     "step": {
       "init": {
         "title": "Daikin WiFi Watchdog options",
-        "description": "Pick your Companion notify target (iPhone). Optional switches enable a power-cycle when unreachable.",
+        "description": "Watching {daikin_count} Daikin AC unit(s). Optional smart plugs enable a power-cycle when a module is unreachable.",
         "data": {
           "check_interval": "Check interval (seconds)",
           "failures_before_reboot": "Failures before auto reboot",
@@ -29,12 +29,60 @@
           "reboot_cooldown": "Cooldown after reboot (seconds)",
           "max_soft_reboots_per_day": "Max soft reboots / day / module",
           "http_timeout": "HTTP timeout (seconds)",
-          "notify_service": "Mobile notify target (e.g. iPhone)"
+          "hard_reboot_off_seconds": "Smart plug off duration (seconds)",
+          "reload_daikin": "Reload Daikin AC after reboot",
+          "notify_service": "Mobile notify target",
+          "configure_hard_switches": "Configure power-cycle plugs"
+        }
+      },
+      "hard_switch": {
+        "title": "Power-cycle plug",
+        "description": "Optional smart plug for **{name}** ({host}) used when the WiFi module no longer answers.",
+        "data": {
+          "hard_reboot_switch": "Smart plug"
         }
       }
     }
   },
   "entity": {
+    "binary_sensor": {
+      "healthy": {
+        "name": "WiFi healthy"
+      }
+    },
+    "sensor": {
+      "wifi_status": {
+        "name": "WiFi status",
+        "state": {
+          "ok": "OK",
+          "error_code": "Error code",
+          "unreachable": "Unreachable",
+          "bad_response": "Bad response",
+          "disabled": "Watchdog disabled",
+          "rebooting": "Rebooting"
+        }
+      },
+      "wifi_error_code": {
+        "name": "WiFi error code"
+      },
+      "wifi_last_reboot": {
+        "name": "WiFi last reboot"
+      },
+      "wifi_soft_reboots_today": {
+        "name": "WiFi soft reboots today"
+      },
+      "wifi_consecutive_failures": {
+        "name": "WiFi consecutive failures"
+      }
+    },
+    "button": {
+      "reboot_wifi": {
+        "name": "Reboot WiFi module"
+      },
+      "hard_reboot_wifi": {
+        "name": "Hard-reboot WiFi module"
+      }
+    },
     "switch": {
       "watchdog_enabled": {
         "name": "Watchdog enabled"
@@ -42,6 +90,50 @@
       "notifications_enabled": {
         "name": "Crash/reboot notifications"
       }
+    }
+  },
+  "services": {
+    "reboot": {
+      "name": "Reboot WiFi module",
+      "description": "Soft-reboot a Daikin WiFi module.",
+      "fields": {
+        "entry_id": {
+          "name": "Daikin config entry ID",
+          "description": "Official Daikin AC entry id (optional)."
+        },
+        "host": {
+          "name": "Host",
+          "description": "Module IP (optional)."
+        }
+      }
+    },
+    "hard_reboot": {
+      "name": "Hard-reboot WiFi module",
+      "description": "Power-cycle the mapped smart plug for a Daikin WiFi module.",
+      "fields": {
+        "entry_id": {
+          "name": "Daikin config entry ID",
+          "description": "Official Daikin AC entry id (optional)."
+        },
+        "host": {
+          "name": "Host",
+          "description": "Module IP (optional)."
+        }
+      }
+    },
+    "check_now": {
+      "name": "Check now",
+      "description": "Run a health check cycle immediately."
+    }
+  },
+  "issues": {
+    "soft_reboot_quota": {
+      "title": "Soft-reboot quota reached ({name})",
+      "description": "{name} reached its daily soft-reboot limit ({max}). Configure a smart plug for a power-cycle, or wait until tomorrow."
+    },
+    "module_unreachable": {
+      "title": "{name} is unreachable",
+      "description": "The WiFi module at {host} does not answer. Map a smart plug in the integration options to allow a hard reboot."
     }
   }
 }

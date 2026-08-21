@@ -1,12 +1,13 @@
 {
   "domain": "daikin_wifi_watchdog",
   "name": "Daikin WiFi Watchdog",
-  "codeowners": [],
+  "codeowners": ["@nicdive"],
   "config_flow": true,
   "documentation": "https://github.com/nicdive/daikin-HA-watchdog",
+  "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/nicdive/daikin-HA-watchdog/issues",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "after_dependencies": [
     "daikin"
   ]

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
@@ -17,8 +16,8 @@ from .entity import DaikinWatchdogEntity
 
 DESCRIPTION = BinarySensorEntityDescription(
     key="healthy",
-    name="WiFi healthy",
-    device_class=BinarySensorDeviceClass.CONNECTIVITY,
+    translation_key="healthy",
+    icon="mdi:wifi-check",
 )
 
 
@@ -33,7 +32,7 @@ async def async_setup_entry(
     @callback
     def _add_entities() -> None:
         new: list[DaikinWifiHealthySensor] = []
-        for daikin_entry_id in (coordinator.data or {}):
+        for daikin_entry_id in coordinator.data or {}:
             if daikin_entry_id in known:
                 continue
             known.add(daikin_entry_id)
@@ -46,14 +45,19 @@ async def async_setup_entry(
 
 
 class DaikinWifiHealthySensor(DaikinWatchdogEntity, BinarySensorEntity):
-    """On when module answers and err != 255."""
+    """On when the module answers and err is not an unhealthy code."""
 
     entity_description = DESCRIPTION
 
     def __init__(
         self, coordinator: DaikinWatchdogCoordinator, daikin_entry_id: str
     ) -> None:
-        super().__init__(coordinator, daikin_entry_id, DESCRIPTION.key)
+        super().__init__(
+            coordinator,
+            daikin_entry_id,
+            DESCRIPTION.key,
+            translation_key=DESCRIPTION.translation_key,
+        )
 
     @property
     def is_on(self) -> bool | None:

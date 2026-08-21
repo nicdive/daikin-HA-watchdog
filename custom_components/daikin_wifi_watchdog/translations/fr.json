@@ -9,7 +9,7 @@
           "failures_before_reboot": "Échecs avant reboot auto",
           "auto_reboot": "Reboot automatique",
           "notifications_enabled": "Notifications plantage/reboot",
-          "notify_service": "Notify mobile (ex. iPhone)"
+          "notify_service": "Notify mobile"
         }
       }
     },
@@ -21,7 +21,7 @@
     "step": {
       "init": {
         "title": "Options Daikin WiFi Watchdog",
-        "description": "Choisis ton notify Companion (iPhone). Les prises optionnelles permettent un power-cycle si le module est injoignable.",
+        "description": "Surveillance de {daikin_count} climatisation(s) Daikin. Les prises optionnelles permettent un power-cycle si le module est injoignable.",
         "data": {
           "check_interval": "Intervalle de contrôle (secondes)",
           "failures_before_reboot": "Échecs avant reboot auto",
@@ -29,7 +29,17 @@
           "reboot_cooldown": "Cooldown après reboot (secondes)",
           "max_soft_reboots_per_day": "Max soft reboots / jour / module",
           "http_timeout": "Timeout HTTP (secondes)",
-          "notify_service": "Notify mobile (ex. iPhone)"
+          "hard_reboot_off_seconds": "Durée d'extinction de la prise (secondes)",
+          "reload_daikin": "Recharger Daikin AC après reboot",
+          "notify_service": "Notify mobile",
+          "configure_hard_switches": "Configurer les prises de hard-reboot"
+        }
+      },
+      "hard_switch": {
+        "title": "Prise de power-cycle",
+        "description": "Prise optionnelle pour **{name}** ({host}), utilisée si le module WiFi ne répond plus.",
+        "data": {
+          "hard_reboot_switch": "Prise connectée"
         }
       }
     }
@@ -42,7 +52,15 @@
     },
     "sensor": {
       "wifi_status": {
-        "name": "État WiFi"
+        "name": "État WiFi",
+        "state": {
+          "ok": "OK",
+          "error_code": "Code erreur",
+          "unreachable": "Injoignable",
+          "bad_response": "Réponse invalide",
+          "disabled": "Watchdog désactivé",
+          "rebooting": "Redémarrage"
+        }
       },
       "wifi_error_code": {
         "name": "Code erreur WiFi"
@@ -52,11 +70,17 @@
       },
       "wifi_soft_reboots_today": {
         "name": "Soft reboots aujourd'hui"
+      },
+      "wifi_consecutive_failures": {
+        "name": "Échecs consécutifs WiFi"
       }
     },
     "button": {
       "reboot_wifi": {
         "name": "Redémarrer le module WiFi"
+      },
+      "hard_reboot_wifi": {
+        "name": "Hard-reboot du module WiFi"
       }
     },
     "switch": {
@@ -83,9 +107,33 @@
         }
       }
     },
+    "hard_reboot": {
+      "name": "Hard-reboot du module WiFi",
+      "description": "Power-cycle de la prise associée à un module WiFi Daikin.",
+      "fields": {
+        "entry_id": {
+          "name": "ID entrée Daikin",
+          "description": "ID de l'entrée Daikin AC (optionnel)."
+        },
+        "host": {
+          "name": "Hôte",
+          "description": "IP du module (optionnel)."
+        }
+      }
+    },
     "check_now": {
       "name": "Vérifier maintenant",
       "description": "Lance immédiatement un cycle de surveillance."
+    }
+  },
+  "issues": {
+    "soft_reboot_quota": {
+      "title": "Quota de soft-reboot atteint ({name})",
+      "description": "{name} a atteint la limite quotidienne de soft-reboots ({max}). Configure une prise pour un power-cycle, ou attends demain."
+    },
+    "module_unreachable": {
+      "title": "{name} est injoignable",
+      "description": "Le module WiFi {host} ne répond plus. Associe une prise dans les options de l'intégration pour permettre un hard-reboot."
     }
   }
 }

@@ -1,0 +1,42 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "healthy": {
+        "default": "mdi:wifi-check",
+        "state": {
+          "off": "mdi:wifi-alert"
+        }
+      }
+    },
+    "sensor": {
+      "wifi_status": {
+        "default": "mdi:wifi"
+      },
+      "wifi_error_code": {
+        "default": "mdi:alert-circle-outline"
+      },
+      "wifi_soft_reboots_today": {
+        "default": "mdi:restart"
+      },
+      "wifi_consecutive_failures": {
+        "default": "mdi:counter"
+      }
+    },
+    "button": {
+      "reboot_wifi": {
+        "default": "mdi:restart-alert"
+      },
+      "hard_reboot_wifi": {
+        "default": "mdi:power-cycle"
+      }
+    },
+    "switch": {
+      "watchdog_enabled": {
+        "default": "mdi:dog-service"
+      },
+      "notifications_enabled": {
+        "default": "mdi:cellphone-message"
+      }
+    }
+  }
+}
