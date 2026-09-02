@@ -33,17 +33,22 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator: DaikinWatchdogCoordinator = hass.data[DOMAIN][entry.entry_id]
-    known: set[str] = set()
+    known_soft: set[str] = set()
+    known_hard: set[str] = set()
 
     @callback
     def _add_entities() -> None:
         new: list[ButtonEntity] = []
-        for daikin_entry_id in coordinator.data or {}:
-            if daikin_entry_id in known:
-                continue
-            known.add(daikin_entry_id)
-            new.append(DaikinWifiRebootButton(coordinator, daikin_entry_id))
-            new.append(DaikinWifiHardRebootButton(coordinator, daikin_entry_id))
+        for daikin_entry_id, snap in (coordinator.data or {}).items():
+            if daikin_entry_id not in known_soft:
+                known_soft.add(daikin_entry_id)
+                new.append(DaikinWifiRebootButton(coordinator, daikin_entry_id))
+            has_hard = bool(snap.attributes.get("has_hard_reboot_switch"))
+            if has_hard and daikin_entry_id not in known_hard:
+                known_hard.add(daikin_entry_id)
+                new.append(DaikinWifiHardRebootButton(coordinator, daikin_entry_id))
+            elif not has_hard:
+                known_hard.discard(daikin_entry_id)
         if new:
             async_add_entities(new)
 
@@ -80,13 +85,6 @@ class DaikinWifiHardRebootButton(DaikinWatchdogEntity, ButtonEntity):
             HARD_REBOOT.key,
             translation_key=HARD_REBOOT.translation_key,
         )
-
-    @property
-    def available(self) -> bool:
-        snap = self.snapshot
-        if snap is None:
-            return False
-        return bool(snap.attributes.get("has_hard_reboot_switch"))
 
     async def async_press(self) -> None:
         await self.coordinator.async_hard_reboot_module(entry_id=self._daikin_entry_id)
