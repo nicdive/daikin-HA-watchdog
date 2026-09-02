@@ -10,6 +10,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
+
+try:
+    from homeassistant.config_entries import SIGNAL_CONFIG_ENTRY_CHANGED
+except ImportError:  # pragma: no cover - older HA
+    SIGNAL_CONFIG_ENTRY_CHANGED = "config_entry_changed"
 
 from .const import (
     CONF_AUTO_REBOOT,
@@ -117,7 +123,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     entry.async_on_unload(
-        hass.config_entries.async_add_listener(coordinator.async_on_ha_config_entries_changed)
+        async_dispatcher_connect(
+            hass,
+            SIGNAL_CONFIG_ENTRY_CHANGED,
+            coordinator.async_on_ha_config_entries_changed,
+        )
     )
     _register_services(hass)
     return True

@@ -179,8 +179,16 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
         return fr if self._is_french() else en
 
     @callback
-    def async_on_ha_config_entries_changed(self) -> None:
+    def async_on_ha_config_entries_changed(self, *args: Any) -> None:
+        """Refresh when a Daikin AC config entry is added, removed, or updated.
+
+        Home Assistant dispatches SIGNAL_CONFIG_ENTRY_CHANGED as (change, entry).
+        """
         if self._unloaded:
+            return
+        entry = args[1] if len(args) > 1 else (args[0] if args else None)
+        domain = getattr(entry, "domain", None)
+        if domain not in (None, DAIKIN_DOMAIN, DOMAIN):
             return
         if self._discover_unsub is not None:
             self._discover_unsub()
