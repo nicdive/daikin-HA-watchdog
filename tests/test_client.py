@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 from client import HealthStatus, parse_daikin_response
-from helpers import module_url, reboot_exception_is_expected, sanitize_host
+from helpers import (
+    format_device_label,
+    looks_like_host,
+    module_url,
+    reboot_exception_is_expected,
+    sanitize_host,
+)
 
 
 def test_parse_basic_info() -> None:
@@ -39,6 +45,22 @@ def test_module_url() -> None:
     )
     assert module_url("2001:db8::1", "/common/basic_info") == (
         "http://[2001:db8::1]/common/basic_info"
+    )
+
+
+def test_looks_like_host() -> None:
+    assert looks_like_host("192.168.23.138")
+    assert looks_like_host("192.168.23.138:80")
+    assert looks_like_host("2001:db8::1")
+    assert not looks_like_host("Salon")
+    assert not looks_like_host("Climatisation chambre")
+
+
+def test_format_device_label() -> None:
+    assert format_device_label("Clim salon", "Chambre") == "Clim salon (Chambre)"
+    assert format_device_label("Chambre", "Chambre") == "Chambre"
+    assert format_device_label("Clim Chambre parentale", "Chambre parentale") == (
+        "Clim Chambre parentale"
     )
 
 

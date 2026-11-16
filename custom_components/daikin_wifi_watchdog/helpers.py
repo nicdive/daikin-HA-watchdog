@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ipaddress
+import re
 from urllib.parse import urlsplit
 
 
@@ -34,6 +36,36 @@ def sanitize_host(host: str) -> str:
     if raw.count(":") > 1:
         return f"[{raw}]"
     return raw
+
+
+_IPV4 = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$")
+
+
+def looks_like_host(value: str | None) -> bool:
+    """True when a label is an IP address, not a human device name."""
+    raw = (value or "").strip()
+    if not raw:
+        return True
+    if _IPV4.fullmatch(raw):
+        return True
+    if raw.startswith("[") and "]" in raw:
+        raw = raw[1 : raw.index("]")]
+    if "%" in raw:
+        raw = raw.split("%", 1)[0]
+    try:
+        ipaddress.ip_address(raw)
+        return True
+    except ValueError:
+        return False
+
+
+def format_device_label(name: str, area: str | None = None) -> str:
+    """Build a notification label like 'Clim salon (Chambre)'."""
+    label = (name or "").strip() or "Daikin"
+    area_name = (area or "").strip()
+    if area_name and area_name.casefold() not in label.casefold():
+        return f"{label} ({area_name})"
+    return label
 
 
 def module_url(host: str, path: str, *, https: bool = False) -> str:

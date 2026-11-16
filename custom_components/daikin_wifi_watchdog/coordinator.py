@@ -12,7 +12,9 @@ from typing import Any
 from homeassistant.config_entries import SOURCE_IGNORE, ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_HOST, CONF_PASSWORD, CONF_UUID
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_call_later
@@ -59,7 +61,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .recovery import RecoveryAction, daily_counter_should_reset, decide_recovery
-from .helpers import reboot_exception_is_expected
+from .helpers import format_device_label, looks_like_host, reboot_exception_is_expected
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -177,6 +179,90 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
 
     def _msg(self, fr: str, en: str) -> str:
         return fr if self._is_french() else en
+
+    def _daikin_ha_device(self, module: TrackedModule):
+        """Official Daikin AC device, if the registry has one for this entry."""
+        dev_reg = dr.async_get(self.hass)
+        devices = list(dr.async_entries_for_config_entry(dev_reg, module.entry_id))
+        if not devices and module.mac:
+            found = dev_reg.async_get_device(
+                connections={(dr.CONNECTION_NETWORK_MAC, module.mac)}
+            )
+            return found
+        if not devices:
+            return None
+        devices.sort(
+            key=lambda device: (
+                0 if device.name_by_user else 1,
+                0 if device.area_id else 1,
+                device.name or "",
+            )
+        )
+        return devices[0]
+
+    def _area_name(self, area_id: str | None) -> str | None:
+        if not area_id:
+            return None
+        area = ar.async_get(self.hass).async_get_area(area_id)
+        return area.name if area else None
+
+    def _climate_identity(self, module: TrackedModule) -> tuple[str | None, str | None]:
+        """Friendly climate name and area id from the official Daikin entry."""
+        ent_reg = er.async_get(self.hass)
+        for ent in er.async_entries_for_config_entry(ent_reg, module.entry_id):
+            if ent.domain != "climate":
+                continue
+            state = self.hass.states.get(ent.entity_id)
+            name = None
+            if state is not None:
+                name = state.name
+            elif ent.name:
+                name = ent.name
+            elif ent.original_name:
+                name = ent.original_name
+            return name, ent.area_id
+        return None, None
+
+    def _adapter_name(self, module: TrackedModule) -> str | None:
+        state = self._states.get(module.entry_id)
+        raw = state.last_result.raw if state and state.last_result else None
+        name = (raw or {}).get("name") if isinstance(raw, dict) else None
+        if isinstance(name, str) and name.strip() and not looks_like_host(name):
+            return name.strip()
+        return None
+
+    def _module_area(self, module: TrackedModule) -> str | None:
+        device = self._daikin_ha_device(module)
+        if device and device.area_id:
+            area = self._area_name(device.area_id)
+            if area:
+                return area
+        _, climate_area_id = self._climate_identity(module)
+        return self._area_name(climate_area_id)
+
+    def _module_label(self, module: TrackedModule) -> str:
+        """Human label for notifications: device name and room, not the IP."""
+        device = self._daikin_ha_device(module)
+        climate_name, _climate_area_id = self._climate_identity(module)
+        candidates: list[str] = []
+        if device and device.name_by_user:
+            candidates.append(device.name_by_user)
+        if climate_name:
+            candidates.append(climate_name)
+        if device and device.name:
+            candidates.append(device.name)
+        adapter = self._adapter_name(module)
+        if adapter:
+            candidates.append(adapter)
+        if module.title:
+            candidates.append(module.title)
+        name = next(
+            (candidate for candidate in candidates if not looks_like_host(candidate)),
+            None,
+        )
+        if not name:
+            name = climate_name or adapter or module.title or module.host
+        return format_device_label(name, self._module_area(module))
 
     @callback
     def async_on_ha_config_entries_changed(self, *args: Any) -> None:
@@ -455,8 +541,8 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
                     await self._async_notify(
                         self._msg("Daikin WiFi OK", "Daikin WiFi OK"),
                         self._msg(
-                            f"{module.title} est de nouveau joignable ({module.host}).",
-                            f"{module.title} is reachable again ({module.host}).",
+                            f"{self._module_label(module)} est de nouveau joignable.",
+                            f"{self._module_label(module)} is reachable again.",
                         ),
                     )
             state.consecutive_failures = 0
@@ -483,7 +569,7 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
             state.last_ok_notified = False
             await self._async_notify(
                 self._msg("Daikin WiFi planté", "Daikin WiFi down"),
-                f"{module.title} ({module.host}) : {result.status.value} — {result.detail}",
+                f"{self._module_label(module)} : {result.status.value} — {result.detail}",
             )
 
         action = decide_recovery(
@@ -565,7 +651,11 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
             is_fixable=False,
             severity=ir.IssueSeverity.WARNING,
             translation_key=translation_key,
-            translation_placeholders={"name": module.title, "host": module.host, **placeholders},
+            translation_placeholders={
+                "name": self._module_label(module),
+                "host": module.host,
+                **placeholders,
+            },
         )
 
     def _async_clear_issue(self, daikin_entry_id: str) -> None:
@@ -673,8 +763,8 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
         await self._async_notify(
             self._msg("Daikin WiFi reboot", "Daikin WiFi reboot"),
             self._msg(
-                f"Soft reboot de {module.title} ({module.host}) — {'OK' if ok else 'échec'}: {detail}",
-                f"Soft reboot of {module.title} ({module.host}) — {'OK' if ok else 'failed'}: {detail}",
+                f"Soft reboot de {self._module_label(module)} — {'OK' if ok else 'échec'}: {detail}",
+                f"Soft reboot of {self._module_label(module)} — {'OK' if ok else 'failed'}: {detail}",
             ),
         )
 
@@ -755,9 +845,9 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
         await self._async_notify(
             self._msg("Daikin WiFi hard reboot", "Daikin WiFi hard reboot"),
             self._msg(
-                f"Power-cycle de {module.title} ({module.host}) raison={reason} — "
+                f"Power-cycle de {self._module_label(module)} raison={reason} — "
                 f"{'OK' if ok else 'échec'}: {detail}",
-                f"Power-cycle of {module.title} ({module.host}) reason={reason} — "
+                f"Power-cycle of {self._module_label(module)} reason={reason} — "
                 f"{'OK' if ok else 'failed'}: {detail}",
             ),
         )
@@ -860,7 +950,9 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
                 else None,
                 "last_reboot_kind": state.last_reboot_kind,
                 "consecutive_failures": state.consecutive_failures,
-                "name": module.title,
+                "name": self._module_label(module),
+                "device_name": module.title,
+                "area": self._module_area(module),
                 "watchdog_enabled": watchdog_enabled,
                 "in_cooldown": in_cooldown,
                 "cooldown_remaining": cooldown_remaining,
