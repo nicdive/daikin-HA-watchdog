@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import ipaddress
+import json
 import re
+from pathlib import Path
+from typing import Any
 from urllib.parse import urlsplit
 
 
@@ -57,6 +60,27 @@ def looks_like_host(value: str | None) -> bool:
         return True
     except ValueError:
         return False
+
+
+_UNDERSCORE_VER = re.compile(r"^\d+(?:_\d+)+$")
+
+
+def integration_version() -> str:
+    """Version from manifest.json — the value Home Assistant should show."""
+    manifest = Path(__file__).with_name("manifest.json")
+    return str(json.loads(manifest.read_text(encoding="utf-8"))["version"])
+
+
+def format_adapter_version(value: Any) -> str | None:
+    """Turn Daikin firmware strings like 1_2_54 into 1.2.54."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if _UNDERSCORE_VER.fullmatch(text):
+        return text.replace("_", ".")
+    return text
 
 
 def format_device_label(name: str, area: str | None = None) -> str:

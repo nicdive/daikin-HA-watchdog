@@ -9,7 +9,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant, ServiceCall, callback
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 try:
@@ -48,6 +48,7 @@ from .const import (
 )
 from .coordinator import DaikinWatchdogCoordinator
 from .entity_cleanup import async_cleanup_stale_entities
+from .helpers import integration_version
 
 REBOOT_SCHEMA = vol.Schema(
     {
@@ -121,6 +122,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await coordinator.async_config_entry_first_refresh()
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    _async_update_hub_device(hass, entry)
     async_cleanup_stale_entities(hass, entry, coordinator)
 
     @callback
@@ -139,6 +141,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     _register_services(hass)
     return True
+
+
+@callback
+def _async_update_hub_device(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Keep the hub device firmware field in sync with manifest.json."""
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, entry.entry_id)},
+        manufacturer="Daikin",
+        name="Daikin WiFi Watchdog",
+        model="WiFi Watchdog",
+        sw_version=integration_version(),
+        configuration_url="https://github.com/nicdive/daikin-HA-watchdog",
+    )
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:

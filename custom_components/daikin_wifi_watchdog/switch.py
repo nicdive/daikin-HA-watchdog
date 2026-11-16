@@ -20,6 +20,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import DaikinWatchdogCoordinator
+from .helpers import integration_version
 
 WATCHDOG_SWITCH = SwitchEntityDescription(
     key="watchdog_enabled",
@@ -87,6 +88,7 @@ class DaikinWatchdogToggleSwitch(SwitchEntity, RestoreEntity):
             name="Daikin WiFi Watchdog",
             manufacturer="Daikin",
             model="WiFi Watchdog",
+            sw_version=integration_version(),
             configuration_url="https://github.com/nicdive/daikin-HA-watchdog",
         )
         self._attr_is_on = bool(entry.options.get(option_key, default))

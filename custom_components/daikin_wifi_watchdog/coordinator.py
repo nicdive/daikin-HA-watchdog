@@ -61,7 +61,12 @@ from .const import (
     STORAGE_VERSION,
 )
 from .recovery import RecoveryAction, daily_counter_should_reset, decide_recovery
-from .helpers import format_device_label, looks_like_host, reboot_exception_is_expected
+from .helpers import (
+    format_adapter_version,
+    format_device_label,
+    looks_like_host,
+    reboot_exception_is_expected,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -610,8 +615,9 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
         if module.host:
             info["configuration_url"] = f"http://{module.host}/common/basic_info"
         raw = (result.raw if result else None) or {}
-        if raw.get("ver"):
-            info["sw_version"] = str(raw["ver"])
+        version = format_adapter_version(raw.get("ver"))
+        if version:
+            info["sw_version"] = version
         dr.async_get(self.hass).async_get_or_create(**info)
 
     def _update_device_from_health(self, module: TrackedModule, result: HealthResult) -> None:
@@ -623,9 +629,9 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
         if device is None:
             return
         updates: dict[str, Any] = {}
-        ver = raw.get("ver")
-        if ver:
-            updates["sw_version"] = str(ver)
+        version = format_adapter_version(raw.get("ver"))
+        if version:
+            updates["sw_version"] = version
         model = raw.get("adp_kind")
         if model is not None:
             updates["model"] = f"WiFi module (adp_kind={model})"
@@ -957,7 +963,7 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
                 "in_cooldown": in_cooldown,
                 "cooldown_remaining": cooldown_remaining,
                 "has_hard_reboot_switch": bool(self._hard_switch_for(module)),
-                "adapter_version": (result.raw or {}).get("ver"),
+                "adapter_version": format_adapter_version((result.raw or {}).get("ver")),
             },
         )
 

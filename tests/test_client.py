@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from client import HealthStatus, parse_daikin_response
 from helpers import (
+    format_adapter_version,
     format_device_label,
+    integration_version,
     looks_like_host,
     module_url,
     reboot_exception_is_expected,
@@ -54,6 +56,17 @@ def test_looks_like_host() -> None:
     assert looks_like_host("2001:db8::1")
     assert not looks_like_host("Salon")
     assert not looks_like_host("Climatisation chambre")
+
+
+def test_format_adapter_version() -> None:
+    assert format_adapter_version("1_2_54") == "1.2.54"
+    assert format_adapter_version("3.2.6") == "3.2.6"
+    assert format_adapter_version("") is None
+    assert format_adapter_version(None) is None
+
+
+def test_integration_version_matches_manifest() -> None:
+    assert integration_version() == "1.3.4"
 
 
 def test_format_device_label() -> None:
