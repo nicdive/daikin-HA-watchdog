@@ -49,12 +49,19 @@ def looks_like_host(value: str | None) -> bool:
     raw = (value or "").strip()
     if not raw:
         return True
+    if "://" in raw:
+        parsed = urlsplit(raw)
+        raw = (parsed.netloc or parsed.path or "").strip().strip("/")
     if _IPV4.fullmatch(raw):
         return True
     if raw.startswith("[") and "]" in raw:
         raw = raw[1 : raw.index("]")]
     if "%" in raw:
         raw = raw.split("%", 1)[0]
+    if ":" in raw and raw.count(":") == 1:
+        host_part, _, port = raw.partition(":")
+        if port.isdigit():
+            raw = host_part
     try:
         ipaddress.ip_address(raw)
         return True
