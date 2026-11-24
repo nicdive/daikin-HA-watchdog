@@ -1,190 +1,170 @@
-# Dashboard Lovelace — Chauffage & Clim (Daikin WiFi Watchdog 1.4+)
+# Vue « Clim » à coller dans ton tableau de bord existant
+# (remplace uniquement le bloc path: clim — laisse Home / Commandes / Jardin / …)
 #
-# Installation :
-# 1. Paramètres → Tableaux de bord → Ajouter un tableau de bord
-# 2. Menu ⋮ → Éditeur brut (Raw) → coller ce fichier
-# 3. Adapter les entity_id ci-dessous si besoin
-#    (Paramètres → Entités → chercher "Daikin WiFi Watchdog", "climate.", "baie", etc.)
-#
-# Entités hub typiques (FR) :
-#   select.daikin_wifi_watchdog_mode_chauffage
-#   select.daikin_wifi_watchdog_mode_clim
-#   switch.daikin_wifi_watchdog_auto_chauffage
-#   switch.daikin_wifi_watchdog_auto_clim
-# Si tes IDs sont en anglais (_heating_mode / _auto_heating), remplace-les.
+# Si les selects/switch du hub n’apparaissent pas : Paramètres → Entités
+# → cherche « Daikin WiFi Watchdog » et corrige les entity_id.
 
-title: Chauffage & Clim
-views:
-  - title: Maison
-    path: clim
-    icon: mdi:home-thermometer
-    type: sections
-    max_columns: 3
-    sections:
-      # ── Commandes globales ──────────────────────────────────────────
-      - type: grid
-        cards:
-          - type: heading
-            heading: Commandes
-            heading_style: title
-            icon: mdi:thermostat-auto
+title: Clim
+path: clim
+icon: mdi:home-thermometer-outline
+type: sections
+max_columns: 4
+sections:
+  # ── AUTO + scènes ─────────────────────────────────────────────────
+  - type: grid
+    cards:
+      - type: heading
+        heading: Gestion
+        heading_style: title
+        icon: mdi:thermostat-auto
 
-          - type: entities
-            show_header_toggle: false
-            entities:
-              - entity: switch.daikin_wifi_watchdog_auto_chauffage
-                name: AUTO chauffage
-                icon: mdi:radiator
-              - entity: switch.daikin_wifi_watchdog_auto_clim
-                name: AUTO clim
-                icon: mdi:snowflake-thermometer
-              - type: divider
-              - entity: select.daikin_wifi_watchdog_mode_chauffage
-                name: Mode chauffage
-                icon: mdi:radiator
-              - entity: select.daikin_wifi_watchdog_mode_clim
-                name: Mode clim
-                icon: mdi:snowflake
+      - type: tile
+        entity: switch.daikin_wifi_watchdog_auto_chauffage
+        name: AUTO chauffage
+        icon: mdi:radiator
+        features:
+          - type: toggle
 
-          - type: markdown
-            content: |
-              **AUTO** : un seul à la fois (chauffage *ou* clim).
-              Changement manuel d'un mode = coupe l'AUTO correspondant.
-              **Déshum** = manuel uniquement.
+      - type: tile
+        entity: switch.daikin_wifi_watchdog_auto_clim
+        name: AUTO clim
+        icon: mdi:snowflake-thermometer
+        features:
+          - type: toggle
 
-      # ── Capteurs de décision AUTO ───────────────────────────────────
-      # Remplace sensor.xxx / person.xxx par tes vraies entités Netatmo / présence.
-      - type: grid
-        cards:
-          - type: heading
-            heading: Capteurs AUTO
-            heading_style: title
-            icon: mdi:thermometer
+      - type: entities
+        show_header_toggle: false
+        entities:
+          - entity: select.daikin_wifi_watchdog_mode_chauffage
+            name: Mode chauffage
+            icon: mdi:radiator
+          - entity: select.daikin_wifi_watchdog_mode_clim
+            name: Mode clim
+            icon: mdi:snowflake
 
-          - type: entities
-            show_header_toggle: false
-            entities:
-              - entity: sensor.salon_temperature
-                name: Température salon
-                icon: mdi:thermometer
-              - entity: sensor.exterieur_temperature
-                name: Température extérieure
-                icon: mdi:sun-thermometer
-              - entity: person.maison
-                name: Présence
-                icon: mdi:home-account
-              - entity: sun.sun
-                name: Jour / nuit
-                icon: mdi:weather-sunset
+  # ── Capteurs qui pilotent l’AUTO ──────────────────────────────────
+  - type: grid
+    cards:
+      - type: heading
+        heading: Capteurs
+        heading_style: title
+        icon: mdi:thermometer
 
-          - type: markdown
-            content: |
-              Seuils par défaut :
-              - Chauffage ON si salon &lt; 21 °C ou ext &lt; 14 °C
-              - Chauffage OFF si salon &gt; 24 °C ou ext &gt; 19 °C
-              - Clim ON si salon &gt; 28,4 °C ou ext &gt; 30 °C
-              - Clim OFF si ext &lt; 23 °C
+      - type: tile
+        entity: sensor.salon_temperature_interieure
+        name: Salon
+        icon: mdi:home-thermometer
 
-      # ── Pièces / unités Daikin ──────────────────────────────────────
-      # Adapte chaque climate.* au nom réel de ton intégration Daikin AC.
-      - type: grid
-        cards:
-          - type: heading
-            heading: Pièces
-            heading_style: title
-            icon: mdi:hvac
+      - type: tile
+        entity: sensor.salon_temperature_exterieure
+        name: Extérieur
+        icon: mdi:sun-thermometer
 
-          - type: thermostat
-            entity: climate.salon
-            name: Salon
+      - type: tile
+        entity: person.nico
+        name: Présence
+        icon: mdi:account-home
 
-          - type: thermostat
-            entity: climate.cuisine
-            name: Cuisine
+      - type: tile
+        entity: sun.sun
+        name: Jour / nuit
+        icon: mdi:weather-sunset
 
-          - type: thermostat
-            entity: climate.bureau
-            name: Bureau
+  # ── Unités Daikin ─────────────────────────────────────────────────
+  - type: grid
+    cards:
+      - type: heading
+        heading: Pièces
+        heading_style: title
+        icon: mdi:hvac
 
-          - type: thermostat
-            entity: climate.suite_parentale
-            name: Suite parentale
+      - type: tile
+        entity: climate.salon
+        name: Salon
+        features:
+          - type: climate-hvac-modes
+            hvac_modes:
+              - "off"
+              - heat
+              - cool
+              - dry
+              - fan_only
+          - type: target-temperature
 
-          - type: thermostat
-            entity: climate.chambre_clara
-            name: Chambre Clara
+      - type: tile
+        entity: climate.cuisine
+        name: Cuisine
+        features:
+          - type: climate-hvac-modes
+            hvac_modes:
+              - "off"
+              - heat
+              - cool
+              - dry
+              - fan_only
+          - type: target-temperature
 
-          - type: thermostat
-            entity: climate.chambre_louis
-            name: Chambre Louis
+      - type: tile
+        entity: climate.bureau
+        name: Bureau
+        features:
+          - type: climate-hvac-modes
+            hvac_modes:
+              - "off"
+              - heat
+              - cool
+              - dry
+              - fan_only
+          - type: target-temperature
 
-          - type: thermostat
-            entity: climate.chambre_invites
-            name: Chambre invités
+      - type: tile
+        entity: climate.suite_parentale
+        name: Suite parentale
+        features:
+          - type: climate-hvac-modes
+            hvac_modes:
+              - "off"
+              - heat
+              - cool
+              - dry
+              - fan_only
+          - type: target-temperature
 
-      # ── Ouvertures (coupure > 5 min) ─────────────────────────────────
-      # Remplace binary_sensor.xxx par tes baies / fenêtre bureau.
-      # Pas de WC / SDB.
-      - type: grid
-        cards:
-          - type: heading
-            heading: Ouvertures
-            heading_style: title
-            icon: mdi:door-sliding-open
+      - type: tile
+        entity: climate.chambre_clara
+        name: Chambre Clara
+        features:
+          - type: climate-hvac-modes
+            hvac_modes:
+              - "off"
+              - heat
+              - cool
+              - dry
+              - fan_only
+          - type: target-temperature
 
-          - type: entities
-            show_header_toggle: false
-            state_color: true
-            entities:
-              - entity: binary_sensor.baie_salon
-                name: Baie salon
-                icon: mdi:door-sliding
-              - entity: binary_sensor.baie_cuisine
-                name: Baie cuisine
-                icon: mdi:door-sliding
-              - entity: binary_sensor.fenetre_bureau
-                name: Fenêtre bureau
-                icon: mdi:window-closed-variant
-              - entity: binary_sensor.baie_suite
-                name: Baie suite
-                icon: mdi:door-sliding
-              - entity: binary_sensor.baie_clara
-                name: Baie Clara
-                icon: mdi:door-sliding
-              - entity: binary_sensor.baie_louis
-                name: Baie Louis
-                icon: mdi:door-sliding
-              - entity: binary_sensor.baie_invites
-                name: Baie invités
-                icon: mdi:door-sliding
+      - type: tile
+        entity: climate.chambre_louis
+        name: Chambre Louis
+        features:
+          - type: climate-hvac-modes
+            hvac_modes:
+              - "off"
+              - heat
+              - cool
+              - dry
+              - fan_only
+          - type: target-temperature
 
-          - type: markdown
-            content: |
-              Ouverture **> 5 min** → coupe chauffage/clim de **cette** pièce.
-              Refermer → la scène courante reprend.
-
-  # Vue compacte modes uniquement (mobile)
-  - title: Modes
-    path: modes
-    icon: mdi:tune-vertical
-    type: sections
-    max_columns: 2
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Scènes
-            heading_style: title
-
-          - type: entities
-            show_header_toggle: false
-            entities:
-              - entity: switch.daikin_wifi_watchdog_auto_chauffage
-                name: AUTO chauffage
-              - entity: select.daikin_wifi_watchdog_mode_chauffage
-                name: Chauffage
-              - type: divider
-              - entity: switch.daikin_wifi_watchdog_auto_clim
-                name: AUTO clim
-              - entity: select.daikin_wifi_watchdog_mode_clim
-                name: Clim
+      - type: tile
+        entity: climate.chambre_invites
+        name: Chambre invités
+        features:
+          - type: climate-hvac-modes
+            hvac_modes:
+              - "off"
+              - heat
+              - cool
+              - dry
+              - fan_only
+          - type: target-temperature
