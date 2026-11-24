@@ -31,10 +31,10 @@ Le watchdog pilote aussi les scènes chauffage / clim (remplacement eedomus) :
 
 | Entité | Rôle |
 |--------|------|
-| `select.*_mode_chauffage` | Off / Hors-gel / Confort / Eco / Nuit |
-| `select.*_mode_clim` | Off / Jour / Nuit / Eco / Déshum |
-| `switch.*_auto_chauffage` | AUTO règles chauffage |
-| `switch.*_auto_clim` | AUTO règles clim |
+| `select.daikin_wifi_watchdog_heat_mode` | Off / Hors-gel / Confort / Eco / Nuit |
+| `select.daikin_wifi_watchdog_cool_mode` | Off / Jour / Nuit / Eco / Déshum |
+| `switch.daikin_wifi_watchdog_auto_heat` | AUTO règles chauffage |
+| `switch.daikin_wifi_watchdog_auto_cool` | AUTO règles clim |
 
 **Configurer :** Options de l’intégration → *Configurer la gestion chauffage / clim* (capteurs salon / extérieur / présence, ouvertures par pièce, consignes).
 
