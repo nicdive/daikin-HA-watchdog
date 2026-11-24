@@ -1,0 +1,449 @@
+views:
+  - path: default_view
+    title: Home
+    cards:
+      - type: alarm-panel
+        states: []
+        entity: alarm_control_panel.alarmo
+      - type: entities
+        entities:
+          - binary_sensor.switch_158d000126549d
+        title: Chambre Clara
+      - type: entities
+        entities:
+          - light.gateway_light_7c49eb17a23d
+          - sensor.bed_activity_158d0002a490f8
+          - sensor.coordination_158d0002a490f8
+          - binary_sensor.door_window_sensor_158d0001b146b2
+          - binary_sensor.door_window_sensor_158d0001e45b06
+          - sensor.illumination_7c49eb17a23d
+          - sensor.tilt_angle_158d0002a490f8
+          - binary_sensor.vibration_158d0002a490f8
+        title: Chambre invités
+      - type: entities
+        entities:
+          - entity: binary_sensor.switch_158d00013f6ef4
+        title: Chambre Louis
+      - type: entities
+        entities:
+          - light.gateway_light_34ce008bfc36
+          - binary_sensor.door_window_sensor_158d00011237ab
+          - binary_sensor.door_window_sensor_158d0001123851
+          - binary_sensor.door_window_sensor_158d00013edc40
+          - binary_sensor.door_window_sensor_158d00013fede5
+          - binary_sensor.door_window_sensor_158d0001ab1c0a
+          - binary_sensor.door_window_sensor_158d0001ab3fce
+          - binary_sensor.door_window_sensor_158d0001e453fa
+          - sensor.humidity_158d0001ab1715
+          - sensor.humidity_158d0001ab2b49
+          - sensor.humidity_158d0001e42287
+          - sensor.illumination_34ce008bfc36
+          - binary_sensor.motion_sensor_158d00013f99ba
+          - sensor.pressure_158d0001ab1715
+          - sensor.pressure_158d0001ab2b49
+          - sensor.pressure_158d0001e42287
+          - sensor.temperature_158d0001ab1715
+          - sensor.temperature_158d0001ab2b49
+          - sensor.temperature_158d0001e42287
+        title: Etage
+      - type: picture-entity
+        entity: camera.192_168_23_231
+      - type: grid
+        square: false
+        columns: 1
+        cards:
+          - type: entities
+            entities:
+              - entity: light.gateway_light_f0b429b444c2
+              - entity: switch.salon_power
+                name: Power
+              - entity: switch.salon_streamer
+                name: Streamer
+              - entity: binary_sensor.door_window_sensor_158d0001de7879
+              - entity: binary_sensor.door_window_sensor_158d0001002521
+              - entity: binary_sensor.door_window_sensor_158d000111eeb7
+              - entity: binary_sensor.door_window_sensor_158d0001124fd8
+              - entity: binary_sensor.door_window_sensor_158d0001125026
+              - entity: binary_sensor.door_window_sensor_158d0001ab23c9
+              - entity: binary_sensor.door_window_sensor_158d0001ab3fcd
+              - entity: binary_sensor.door_window_sensor_158d0001ab3fe0
+              - entity: binary_sensor.door_window_sensor_158d0001b1474c
+              - entity: binary_sensor.54ef44647e22_gateway
+              - entity: sensor.humidity_158d000117c87f
+              - entity: sensor.illumination_f0b429b444c2
+              - entity: binary_sensor.motion_sensor_158d000104278d
+              - entity: binary_sensor.motion_sensor_158d00013f79f3
+              - entity: binary_sensor.switch_158d00013ecc6f
+              - entity: sensor.salon_temperature_exterieure
+              - entity: sensor.salon_temperature_interieure
+                name: Température intérieure
+              - entity: sensor.temperature_158d000117c87f
+            title: Salon
+          - type: thermostat
+            entity: climate.salon
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - fan_only
+                  - dry
+                  - cool
+                  - heat
+                  - heat_cool
+                  - "off"
+      - type: entities
+        entities:
+          - entity: switch.eclairage_lavabo_sdb_suite
+          - entity: light.gateway_light_7811dce13817
+          - entity: binary_sensor.door_window_sensor_158d0001120350
+          - entity: binary_sensor.door_window_sensor_158d000112385d
+          - entity: binary_sensor.door_window_sensor_158d00012d8f3c
+          - entity: binary_sensor.door_window_sensor_158d00013ed29c
+          - entity: binary_sensor.door_window_sensor_158d0001ab1c03
+          - entity: binary_sensor.door_window_sensor_158d0001ab1c2b
+          - entity: sensor.humidity_158d0001ab2b59
+          - entity: sensor.humidity_158d0001ab2bb8
+          - entity: sensor.humidity_158d0001e422ff
+          - entity: sensor.illumination_158d00016c4122
+          - entity: sensor.illumination_7811dce13817
+          - entity: binary_sensor.motion_sensor_158d00016c4122
+          - entity: binary_sensor.motion_sensor_158d0000fd313f
+          - entity: sensor.pressure_158d0001ab2b59
+          - entity: sensor.pressure_158d0001ab2bb8
+          - entity: sensor.pressure_158d0001e422ff
+          - entity: binary_sensor.switch_158d00010f269f
+          - entity: binary_sensor.switch_158d000128c33c
+          - entity: sensor.temperature_158d0001ab2b59
+          - entity: sensor.temperature_158d0001ab2bb8
+          - entity: sensor.temperature_158d0001e422ff
+        title: Suite parentale
+      - type: entities
+        entities:
+          - person.nico
+      - type: media-control
+        entity: media_player.ppx620_96
+      - type: entities
+        entities:
+          - light.yeelight_color_0x3311abc
+          - light.yeelight_color_0x371e1ea
+          - light.yeelight_color_0x7fabdd5
+          - light.yeelight_color_0x7fca1a7
+          - light.yeelight_lamp1_0x2cd921e
+          - light.yeelight_lamp1_0x327a5a7
+          - light.yeelight_stripe_0x4574caa
+        title: Lumière
+      - type: weather-forecast
+        entity: weather.forecast_maison
+        show_forecast: false
+      - type: entities
+        entities:
+          - entity: switch.zigbee2mqtt_bridge_permit_join
+            name: Permit join
+          - entity: button.zigbee2mqtt_bridge_restart
+            name: Restart
+        title: Zigbee2MQTT Bridge
+
+  - type: sections
+    path: clim
+    max_columns: 4
+    title: Clim
+    icon: mdi:home-thermometer-outline
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Gestion
+            heading_style: title
+            icon: mdi:thermostat-auto
+          - type: tile
+            entity: switch.daikin_wifi_watchdog_auto_chauffage
+            name: AUTO chauffage
+            icon: mdi:radiator
+            features:
+              - type: toggle
+          - type: tile
+            entity: switch.daikin_wifi_watchdog_auto_clim
+            name: AUTO clim
+            icon: mdi:snowflake-thermometer
+            features:
+              - type: toggle
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: select.daikin_wifi_watchdog_mode_chauffage
+                name: Mode chauffage
+                icon: mdi:radiator
+              - entity: select.daikin_wifi_watchdog_mode_clim
+                name: Mode clim
+                icon: mdi:snowflake
+      - type: grid
+        cards:
+          - type: heading
+            heading: Capteurs
+            heading_style: title
+            icon: mdi:thermometer
+          - type: tile
+            entity: sensor.salon_temperature_interieure
+            name: Salon
+            icon: mdi:home-thermometer
+          - type: tile
+            entity: sensor.salon_temperature_exterieure
+            name: Extérieur
+            icon: mdi:sun-thermometer
+          - type: tile
+            entity: person.nico
+            name: Présence
+            icon: mdi:account-home
+          - type: tile
+            entity: sun.sun
+            name: Jour / nuit
+            icon: mdi:weather-sunset
+      - type: grid
+        cards:
+          - type: heading
+            heading: Pièces
+            heading_style: title
+            icon: mdi:hvac
+          - type: tile
+            entity: climate.salon
+            name: Salon
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - "off"
+                  - heat
+                  - cool
+                  - dry
+                  - fan_only
+              - type: target-temperature
+          - type: tile
+            entity: climate.cuisine
+            name: Cuisine
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - "off"
+                  - heat
+                  - cool
+                  - dry
+                  - fan_only
+              - type: target-temperature
+          - type: tile
+            entity: climate.bureau
+            name: Bureau
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - "off"
+                  - heat
+                  - cool
+                  - dry
+                  - fan_only
+              - type: target-temperature
+          - type: tile
+            entity: climate.suite_parentale
+            name: Suite parentale
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - "off"
+                  - heat
+                  - cool
+                  - dry
+                  - fan_only
+              - type: target-temperature
+          - type: tile
+            entity: climate.chambre_clara
+            name: Chambre Clara
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - "off"
+                  - heat
+                  - cool
+                  - dry
+                  - fan_only
+              - type: target-temperature
+          - type: tile
+            entity: climate.chambre_louis
+            name: Chambre Louis
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - "off"
+                  - heat
+                  - cool
+                  - dry
+                  - fan_only
+              - type: target-temperature
+          - type: tile
+            entity: climate.chambre_invites
+            name: Chambre invités
+            features:
+              - type: climate-hvac-modes
+                hvac_modes:
+                  - "off"
+                  - heat
+                  - cool
+                  - dry
+                  - fan_only
+              - type: target-temperature
+
+  - type: sections
+    max_columns: 4
+    title: Commandes
+    path: commandes
+    icon: mdi:garage
+    sections:
+      - type: grid
+        cards:
+          - type: button
+            name: Portail
+            icon: mdi:gate
+            tap_action:
+              action: call-service
+              service: script.portail_rf_pulse
+            hold_action:
+              action: none
+          - type: button
+            name: Garage
+            icon: mdi:garage
+            tap_action:
+              action: call-service
+              service: script.garage_rf_pulse
+            hold_action:
+              action: none
+          - type: tile
+            entity: cover.volet_chambre_invites
+            features:
+              - type: cover-position-favorite
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nouvelle section
+          - type: picture-entity
+            entity: camera.cam_ex_portail
+            camera_image: camera.cam_ex_portail
+
+  - type: sections
+    max_columns: 4
+    title: Jardin
+    path: jardin
+    icon: mdi:palm-tree
+    sections:
+      - type: grid
+        cards:
+          - type: tile
+            entity: light.flush_2_relays
+            features:
+              - type: toggle
+          - type: tile
+            entity: light.flush_2_relays_2
+            vertical: false
+            features:
+              - type: toggle
+            features_position: bottom
+          - type: tile
+            entity: cover.roller_shutter_petit_volet
+            vertical: false
+            features:
+              - type: cover-open-close
+            features_position: bottom
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Pool
+          - type: custom:ouvertures-card
+            entities:
+              - sensor.pool_volet_piscine_etat
+            compact: true
+            show_area: false
+            columns: 3
+            entity: sensor.pool_volet_piscine_etat
+          - type: entities
+            entities:
+              - entity: switch.pool_http_192_168_23_241_cascade
+              - entity: switch.pool_http_192_168_23_241_eclairage_piscine
+              - entity: switch.pool_http_192_168_23_241_pompe_doseuse_chlore
+              - entity: switch.pool_http_192_168_23_241_pompe_doseuse_ph
+      - type: grid
+        cards:
+          - type: heading
+            heading: Pompe Pentair
+            heading_style: title
+          - type: entities
+            entities:
+              - entity: switch.pump_1_afficheur_actif
+              - entity: switch.pump_1_controle_panneau_boutons_pompe
+              - entity: switch.pump_1_marche
+              - entity: sensor.pump_1_puissance
+              - entity: button.pump_1_manuel_rpm
+              - entity: sensor.pump_1_mode_de_fonctionnement
+              - entity: number.pump_1_vitesse_rpm
+              - entity: sensor.pump_1_rpm_actuel
+          - type: custom:pentair-pump-display-card
+            entity: switch.pump_1_marche
+            name: POMPE 1
+            display: switch.pump_1_afficheur_actif
+            clock: sensor.pump_1_horloge_pompe
+            rpm: sensor.pump_1_rpm_actuel
+            watts: sensor.pump_1_puissance
+            mode: sensor.pump_1_mode_de_fonctionnement
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nouvelle section
+          - type: picture-entity
+            entity: camera.exterieur_toit_piscine
+            camera_image: camera.exterieur_toit_piscine
+          - type: picture-entity
+            entity: camera.exterieur_piscine
+            camera_image: camera.exterieur_piscine
+          - type: picture-entity
+            entity: camera.cam_abri
+            camera_image: camera.cam_abri
+          - type: picture-entity
+            entity: camera.cam_local_piscine
+            camera_image: camera.cam_local_piscine
+
+  - type: sections
+    max_columns: 4
+    title: Arrosage
+    path: arrosage
+    icon: mdi:water
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Arrosage gazon
+          - type: entities
+            entities:
+              - entity: input_select.osbee_saison
+              - entity: input_boolean.osbee_saison_auto
+              - entity: switch.osbee_zone_1
+              - entity: switch.osbee_zone_2
+              - entity: switch.osbee_zone_3
+              - entity: binary_sensor.irrigation_unlimited_c1_m
+              - entity: input_boolean.osbee_antidesamorcage
+              - entity: input_boolean.osbee_programmation
+              - entity: input_number.osbee_zone_1_duree_manuelle
+              - entity: switch.osbee_zone_1_arrosage_manuel
+              - entity: input_number.osbee_zone_2_duree_manuelle
+              - entity: switch.osbee_zone_2_arrosage_manuel
+              - entity: input_number.osbee_zone_3_duree_manuelle
+              - entity: switch.osbee_zone_3_arrosage_manuel
+              - entity: sensor.jardin_shelly_pompe_arrosage_relais_0_puissance
+              - entity: switch.jardin_shelly_pompe_arrosage_relais_0
+              - entity: input_boolean.osbee_arrete_secheresse
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nouvelle section
+          - type: custom:irrigation-unlimited-card
+            name: Irrigation Unlimited
+            show_controllers: ""
+            always_show_zones: false
+            always_show_sequences: false
+            show_timeline_scheduled: true
+            show_timeline_history: true
