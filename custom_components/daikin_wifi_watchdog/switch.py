@@ -159,6 +159,7 @@ class DaikinAutoHeatSwitch(SwitchEntity):
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
         self._attr_translation_key = description.translation_key
         self._attr_device_info = _hub_device_info(entry)
+        self.entity_id = f"switch.{DOMAIN}_{description.key}"
 
     @property
     def available(self) -> bool:
@@ -195,6 +196,7 @@ class DaikinAutoCoolSwitch(SwitchEntity):
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
         self._attr_translation_key = description.translation_key
         self._attr_device_info = _hub_device_info(entry)
+        self.entity_id = f"switch.{DOMAIN}_{description.key}"
 
     @property
     def available(self) -> bool:

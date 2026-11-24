@@ -61,6 +61,8 @@ class _HubSelectBase(SelectEntity, RestoreEntity):
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
         self._attr_translation_key = description.translation_key
         self._attr_options = list(options)
+        # Stable entity_id (independent of HA language at first setup).
+        self.entity_id = f"select.{DOMAIN}_{description.key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name="Daikin WiFi Watchdog",
