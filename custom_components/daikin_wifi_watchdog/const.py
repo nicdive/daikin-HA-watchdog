@@ -112,3 +112,18 @@ STATUS_OPTIONS = [
     "disabled",
     "rebooting",
 ]
+
+# Stable hub entity_ids expected by the packaged Lovelace dashboard.
+HUB_STABLE_ENTITY_IDS: dict[str, str] = {
+    "auto_heat": f"switch.{DOMAIN}_auto_heat",
+    "auto_cool": f"switch.{DOMAIN}_auto_cool",
+    "heat_mode": f"select.{DOMAIN}_heat_mode",
+    "cool_mode": f"select.{DOMAIN}_cool_mode",
+    "program_domain": f"select.{DOMAIN}_program_domain",
+    "program_scene": f"select.{DOMAIN}_program_scene",
+    "program_device": f"select.{DOMAIN}_program_device",
+    "program_fan": f"select.{DOMAIN}_program_fan",
+    "program_oscillation": f"select.{DOMAIN}_program_oscillation",
+    "program_power": f"switch.{DOMAIN}_program_power",
+    "program_temperature": f"number.{DOMAIN}_program_temperature",
+}
