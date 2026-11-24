@@ -30,6 +30,8 @@ from .climate_defaults import (
     serialize_default_heat_presets,
 )
 from .climate_manager import ClimateManager
+from .lovelace import schedule_dashboard_install
+from .preset_editor import PresetEditor
 from .const import (
     CONF_AUTO_REBOOT,
     CONF_CHECK_INTERVAL,
@@ -226,6 +228,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = DaikinWatchdogCoordinator(hass, options, config_entry=entry)
     climate = ClimateManager(hass, coordinator, options)
     coordinator.climate = climate
+    editor = PresetEditor(hass, entry, coordinator)
+    coordinator.preset_editor = editor
+    editor.ensure_selection()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     entry.runtime_data = coordinator
@@ -251,6 +256,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     )
     _register_services(hass)
+    schedule_dashboard_install(hass)
     return True
 
 
@@ -279,6 +285,9 @@ async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> Non
     climate: ClimateManager | None = getattr(coordinator, "climate", None)
     if climate is not None:
         climate.update_options(options)
+    editor = getattr(coordinator, "preset_editor", None)
+    if editor is not None:
+        editor.on_options_updated()
     await coordinator.async_request_refresh()
 
 

@@ -26,7 +26,7 @@ Aucune saisie d’IP manuelle. Les identifiants locaux (mot de passe / UUID) dé
 
 Dans les options, tu peux associer une **prise par climatisation** (le formulaire affiche le nom de l’unité) et choisir ton **notify Companion**.
 
-## Chauffage & clim (v1.4+)
+## Chauffage & clim (v1.5+)
 Le watchdog pilote aussi les scènes chauffage / clim (remplacement eedomus) :
 
 | Entité | Rôle |
@@ -35,11 +35,16 @@ Le watchdog pilote aussi les scènes chauffage / clim (remplacement eedomus) :
 | `select.daikin_wifi_watchdog_cool_mode` | Off / Jour / Nuit / Eco / Déshum |
 | `switch.daikin_wifi_watchdog_auto_heat` | AUTO règles chauffage |
 | `switch.daikin_wifi_watchdog_auto_cool` | AUTO règles clim |
+| `select.daikin_wifi_watchdog_program_*` | Éditeur : domaine / scène / appareil / ventilo / oscillation |
+| `number.daikin_wifi_watchdog_program_temperature` | Consigne °C de la sélection |
+| `switch.daikin_wifi_watchdog_program_power` | Allumé / éteint pour la sélection |
 
-**Configurer :** Options de l’intégration → *Configurer la gestion chauffage / clim* (capteurs salon / extérieur / présence, ouvertures par pièce, consignes).
+**Configurer les capteurs AUTO :** Options → *Configurer la gestion chauffage / clim* (salon, extérieur, présence, ouvertures, plage nuit).
 
-**Dashboard prêt à coller :** [`dashboard/daikin_clim_chauffage.yaml`](dashboard/daikin_clim_chauffage.yaml)  
-Paramètres → Tableaux de bord → Ajouter → ⋮ Éditeur brut → coller le YAML, puis adapter les `entity_id` (climates Daikin, baies, capteurs).
+**Modifier les consignes :** le dashboard **Programmation Clim** s’installe tout seul dans la barre latérale (`/daikin-programmation`) au chargement de l’intégration — choisir domaine → scène → appareil, puis régler temp / ventilo / oscillation.
+
+**Dashboard pilotage (manuel) :** [`dashboard/daikin_clim_chauffage.yaml`](dashboard/daikin_clim_chauffage.yaml)  
+Paramètres → Tableaux de bord → Ajouter → ⋮ Éditeur brut → coller le YAML, puis adapter les `entity_id` climates / baies / capteurs.
 
 ## Entités globales
 | Entité | Rôle |

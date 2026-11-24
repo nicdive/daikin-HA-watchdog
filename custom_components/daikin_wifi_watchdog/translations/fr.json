@@ -45,7 +45,7 @@
       },
       "climate": {
         "title": "AUTO chauffage / clim",
-        "description": "Capteurs et seuils pour AUTO chauffage et AUTO clim. Les ouvertures (baies / fenêtre bureau) se configurent à l'étape suivante.",
+        "description": "Capteurs AUTO, plage nuit et ouvertures. Les consignes (température / ventilation / oscillation) se règlent dans le tableau de bord **Programmation Clim**.",
         "data": {
           "climate_enabled": "Activer la gestion chauffage / clim",
           "salon_temp_sensor": "Température salon",
@@ -61,9 +61,7 @@
           "heat_off_outdoor_above": "Chauffage OFF si extérieur au-dessus (°C)",
           "cool_on_salon_above": "Clim ON si salon au-dessus (°C)",
           "cool_on_outdoor_above": "Clim ON si extérieur au-dessus (°C)",
-          "cool_off_outdoor_below": "Clim OFF si extérieur sous (°C)",
-          "configure_heat_presets": "Modifier les consignes chauffage",
-          "configure_cool_presets": "Modifier les consignes clim"
+          "cool_off_outdoor_below": "Clim OFF si extérieur sous (°C)"
         }
       },
       "opening": {
@@ -71,26 +69,6 @@
         "description": "Baie / fenêtre pour **{name}** ({host}). Laisser vide si aucune (WC / SDB non concernés).",
         "data": {
           "opening_sensor": "Capteur d'ouverture"
-        }
-      },
-      "heat_preset": {
-        "title": "Chauffage · {mode} · {name}",
-        "description": "Consignes pour **{name}** en scène chauffage **{mode}**.",
-        "data": {
-          "power": "Appareil allumé",
-          "temperature": "Température de consigne (°C)",
-          "fan_rate": "Ventilation",
-          "oscillation": "Oscillation (ailettes)"
-        }
-      },
-      "cool_preset": {
-        "title": "Clim · {mode} · {name}",
-        "description": "Consignes pour **{name}** en scène clim **{mode}**.",
-        "data": {
-          "power": "Appareil allumé",
-          "temperature": "Température de consigne (°C)",
-          "fan_rate": "Ventilation",
-          "oscillation": "Oscillation (ailettes)"
         }
       }
     }
@@ -154,6 +132,48 @@
           "eco": "Eco",
           "dry": "Déshumidification"
         }
+      },
+      "program_domain": {
+        "name": "Programmation · domaine",
+        "state": {
+          "heat": "Chauffage",
+          "cool": "Clim"
+        }
+      },
+      "program_scene": {
+        "name": "Programmation · scène",
+        "state": {
+          "hors_gel": "Hors-gel",
+          "confort": "Confort",
+          "eco": "Eco",
+          "nuit": "Nuit",
+          "jour": "Jour",
+          "dry": "Déshumidification"
+        }
+      },
+      "program_device": {
+        "name": "Programmation · appareil"
+      },
+      "program_fan": {
+        "name": "Programmation · ventilation",
+        "state": {
+          "A": "Auto",
+          "B": "Silence",
+          "3": "Débit 1",
+          "4": "Débit 2",
+          "5": "Débit 3",
+          "6": "Débit 4",
+          "7": "Débit 5"
+        }
+      },
+      "program_oscillation": {
+        "name": "Programmation · oscillation",
+        "state": {
+          "0": "Arrêt",
+          "1": "Verticale",
+          "2": "Horizontale",
+          "3": "Verticale + horizontale"
+        }
       }
     },
     "switch": {
@@ -168,6 +188,14 @@
       },
       "auto_cool": {
         "name": "AUTO clim"
+      },
+      "program_power": {
+        "name": "Programmation · allumé"
+      }
+    },
+    "number": {
+      "program_temperature": {
+        "name": "Programmation · consigne"
       }
     }
   },

@@ -66,7 +66,15 @@ def test_format_adapter_version() -> None:
 
 
 def test_integration_version_matches_manifest() -> None:
-    assert integration_version() == "1.4.6"
+    import json
+    from pathlib import Path
+
+    manifest = json.loads(
+        Path("custom_components/daikin_wifi_watchdog/manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert integration_version() == manifest["version"]
 
 
 def test_format_device_label() -> None:
