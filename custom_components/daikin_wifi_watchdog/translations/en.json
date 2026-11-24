@@ -32,7 +32,8 @@
           "hard_reboot_off_seconds": "Smart plug off duration (seconds)",
           "reload_daikin": "Reload Daikin AC after reboot",
           "notify_service": "Mobile notify target",
-          "configure_hard_switches": "Configure power-cycle plugs"
+          "configure_hard_switches": "Configure power-cycle plugs",
+          "configure_climate": "Configure heating / cooling management"
         }
       },
       "hard_switch": {
@@ -41,6 +42,44 @@
         "data": {
           "hard_reboot_switch": "Smart plug"
         }
+      },
+      "climate": {
+        "title": "Heating / cooling AUTO",
+        "description": "Sensors and thresholds used by AUTO chauffage and AUTO clim. Opening sensors are mapped on the next step.",
+        "data": {
+          "climate_enabled": "Enable climate management",
+          "salon_temp_sensor": "Living-room temperature sensor",
+          "outdoor_temp_sensor": "Outdoor temperature sensor",
+          "presence_sensor": "Presence (person / binary)",
+          "sun_entity": "Sun entity (day / night)",
+          "opening_delay_seconds": "Opening delay before cut-off (seconds)",
+          "heat_on_salon_below": "Heat ON if living-room below (°C)",
+          "heat_on_outdoor_below": "Heat ON if outdoor below (°C)",
+          "heat_off_salon_above": "Heat OFF if living-room above (°C)",
+          "heat_off_outdoor_above": "Heat OFF if outdoor above (°C)",
+          "cool_on_salon_above": "Cool ON if living-room above (°C)",
+          "cool_on_outdoor_above": "Cool ON if outdoor above (°C)",
+          "cool_off_outdoor_below": "Cool OFF if outdoor below (°C)",
+          "configure_heat_presets": "Edit heating scene setpoints",
+          "configure_cool_presets": "Edit cooling scene setpoints"
+        }
+      },
+      "opening": {
+        "title": "Opening sensor",
+        "description": "Bay / window binary sensor for **{name}** ({host}). Leave empty if none (WC / bathroom windows are not used).",
+        "data": {
+          "opening_sensor": "Opening sensor"
+        }
+      },
+      "heat_preset": {
+        "title": "Heating scene: {mode}",
+        "description": "Per-unit setpoint for this heating mode. Devices: {devices}. Enable unit, set temperature, optionally quiet fan.",
+        "data": {}
+      },
+      "cool_preset": {
+        "title": "Cooling scene: {mode}",
+        "description": "Per-unit setpoint for this cooling mode. Devices: {devices}. Enable unit, set temperature, optionally quiet fan.",
+        "data": {}
       }
     }
   },
@@ -83,12 +122,40 @@
         "name": "Hard-reboot WiFi module"
       }
     },
+    "select": {
+      "heat_mode": {
+        "name": "Heating mode",
+        "state": {
+          "off": "Off",
+          "hors_gel": "Frost protection",
+          "confort": "Comfort",
+          "eco": "Eco",
+          "nuit": "Night"
+        }
+      },
+      "cool_mode": {
+        "name": "Cooling mode",
+        "state": {
+          "off": "Off",
+          "jour": "Day",
+          "nuit": "Night",
+          "eco": "Eco",
+          "dry": "Dry"
+        }
+      }
+    },
     "switch": {
       "watchdog_enabled": {
         "name": "Watchdog enabled"
       },
       "notifications_enabled": {
         "name": "Crash/reboot notifications"
+      },
+      "auto_heat": {
+        "name": "AUTO heating"
+      },
+      "auto_cool": {
+        "name": "AUTO cooling"
       }
     }
   },
@@ -124,6 +191,30 @@
     "check_now": {
       "name": "Check now",
       "description": "Run a health check cycle immediately."
+    },
+    "apply_heat_mode": {
+      "name": "Apply heating mode",
+      "description": "Apply a heating scene to all Daikin units.",
+      "fields": {
+        "mode": {
+          "name": "Mode",
+          "description": "Heating mode (optional, uses current select when omitted)."
+        }
+      }
+    },
+    "apply_cool_mode": {
+      "name": "Apply cooling mode",
+      "description": "Apply a cooling scene to all Daikin units.",
+      "fields": {
+        "mode": {
+          "name": "Mode",
+          "description": "Cooling mode (optional, uses current select when omitted)."
+        }
+      }
+    },
+    "climate_evaluate": {
+      "name": "Evaluate climate AUTO",
+      "description": "Run AUTO heating / cooling rules immediately."
     }
   },
   "issues": {

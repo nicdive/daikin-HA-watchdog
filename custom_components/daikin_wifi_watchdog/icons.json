@@ -30,12 +30,26 @@
         "default": "mdi:power-cycle"
       }
     },
+    "select": {
+      "heat_mode": {
+        "default": "mdi:radiator"
+      },
+      "cool_mode": {
+        "default": "mdi:snowflake"
+      }
+    },
     "switch": {
       "watchdog_enabled": {
         "default": "mdi:dog-service"
       },
       "notifications_enabled": {
         "default": "mdi:cellphone-message"
+      },
+      "auto_heat": {
+        "default": "mdi:radiator"
+      },
+      "auto_cool": {
+        "default": "mdi:snowflake-thermometer"
       }
     }
   }

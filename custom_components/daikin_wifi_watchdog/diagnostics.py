@@ -42,11 +42,22 @@ async def async_get_config_entry_diagnostics(
         coordinator.snapshot_as_dict(snap)
         for snap in (coordinator.data or {}).values()
     ]
+    climate = getattr(coordinator, "climate", None)
+    climate_data = None
+    if climate is not None:
+        climate_data = {
+            "enabled": climate.enabled,
+            "heat_mode": climate.heat_mode,
+            "cool_mode": climate.cool_mode,
+            "auto_heat": climate.auto_heat,
+            "auto_cool": climate.auto_cool,
+        }
     return async_redact_data(
         {
             "options": dict(entry.options or {}),
             "watchdog_enabled": coordinator.options.get("watchdog_enabled"),
             "module_count": len(coordinator.discover_modules()),
+            "climate": climate_data,
             "snapshots": snapshots,
             "last_update_success": coordinator.last_update_success,
         },

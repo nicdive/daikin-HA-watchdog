@@ -35,3 +35,41 @@ hard_reboot:
 check_now:
   name: Check now
   description: Run a health check cycle immediately for all discovered Daikin modules.
+
+apply_heat_mode:
+  name: Apply heating mode
+  description: Apply a heating scene (OFF / HORS-GEL / CONFORT / ECO / NUIT) to all Daikin units.
+  fields:
+    mode:
+      name: Mode
+      description: Optional. Heating mode to apply. Uses the current select value when omitted.
+      example: confort
+      selector:
+        select:
+          options:
+            - off
+            - hors_gel
+            - confort
+            - eco
+            - nuit
+
+apply_cool_mode:
+  name: Apply cooling mode
+  description: Apply a cooling scene (OFF / JOUR / NUIT / ECO / DRY) to all Daikin units.
+  fields:
+    mode:
+      name: Mode
+      description: Optional. Cooling mode to apply. Uses the current select value when omitted.
+      example: jour
+      selector:
+        select:
+          options:
+            - off
+            - jour
+            - nuit
+            - eco
+            - dry
+
+climate_evaluate:
+  name: Evaluate climate AUTO
+  description: Run AUTO chauffage / AUTO clim rules immediately (sensors, presence, openings).
