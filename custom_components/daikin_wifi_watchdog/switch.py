@@ -6,8 +6,9 @@ from typing import Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -19,6 +20,7 @@ from .const import (
     DEFAULT_NOTIFICATIONS_ENABLED,
     DEFAULT_WATCHDOG_ENABLED,
     DOMAIN,
+    SIGNAL_CLIMATE_UPDATED,
 )
 from .coordinator import DaikinWatchdogCoordinator
 from .helpers import integration_version
@@ -161,6 +163,17 @@ class DaikinAutoHeatSwitch(SwitchEntity):
         self._attr_device_info = _hub_device_info(entry)
         self.entity_id = f"switch.{DOMAIN}_{description.key}"
 
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+
+        @callback
+        def _updated() -> None:
+            self.async_write_ha_state()
+
+        self.async_on_remove(
+            async_dispatcher_connect(self.hass, SIGNAL_CLIMATE_UPDATED, _updated)
+        )
+
     @property
     def available(self) -> bool:
         return self._climate.enabled
@@ -197,6 +210,17 @@ class DaikinAutoCoolSwitch(SwitchEntity):
         self._attr_translation_key = description.translation_key
         self._attr_device_info = _hub_device_info(entry)
         self.entity_id = f"switch.{DOMAIN}_{description.key}"
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+
+        @callback
+        def _updated() -> None:
+            self.async_write_ha_state()
+
+        self.async_on_remove(
+            async_dispatcher_connect(self.hass, SIGNAL_CLIMATE_UPDATED, _updated)
+        )
 
     @property
     def available(self) -> bool:

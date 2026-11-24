@@ -86,6 +86,8 @@ STORAGE_VERSION = 1
 CLIMATE_STORAGE_KEY = f"{DOMAIN}_climate"
 CLIMATE_STORAGE_VERSION = 1
 
+SIGNAL_CLIMATE_UPDATED = f"{DOMAIN}_climate_updated"
+
 # Official Daikin integration keys.
 KEY_MAC = "mac"
 

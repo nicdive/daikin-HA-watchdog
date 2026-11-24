@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import Callable, Coroutine
 from datetime import datetime, timedelta
@@ -9,6 +10,7 @@ from typing import Any
 
 from homeassistant.const import STATE_HOME, STATE_NOT_HOME, STATE_OFF, STATE_ON, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
@@ -61,6 +63,7 @@ from .const import (
     DEFAULT_COOL_MODE,
     DEFAULT_HEAT_MODE,
     DEFAULT_SUN_ENTITY,
+    SIGNAL_CLIMATE_UPDATED,
 )
 from .coordinator import DaikinWatchdogCoordinator, TrackedModule
 
@@ -97,6 +100,8 @@ class ClimateManager:
         self._unsub_interval: Callable[[], None] | None = None
         self._unsub_states: Callable[[], None] | None = None
         self._loaded = False
+        self._lock = asyncio.Lock()
+        self._eval_seq = 0
 
     @property
     def enabled(self) -> bool:
@@ -129,12 +134,22 @@ class ClimateManager:
     async def async_setup(self) -> None:
         await self._async_load()
         self._restart_listeners()
-        if self.enabled and (self._auto_heat or self._auto_cool):
+        self._notify()
+        # Re-apply last manual scene after reload (AUTO will re-evaluate itself).
+        if self.enabled and not self._auto_heat and not self._auto_cool:
+            if self._heat_mode != "off":
+                self.hass.async_create_task(self.async_apply_heat_mode(self._heat_mode))
+            elif self._cool_mode != "off":
+                self.hass.async_create_task(self.async_apply_cool_mode(self._cool_mode))
+        elif self.enabled and (self._auto_heat or self._auto_cool):
             self.hass.async_create_task(self.async_evaluate())
 
     async def async_shutdown(self) -> None:
         self._stop_listeners()
         await self._async_save()
+
+    def _notify(self) -> None:
+        async_dispatcher_send(self.hass, SIGNAL_CLIMATE_UPDATED)
 
     def _restart_listeners(self) -> None:
         self._stop_listeners()
@@ -183,18 +198,33 @@ class ClimateManager:
             return
         self._loaded = True
         data = await self._store.async_load() or {}
-        heat = str(data.get(CONF_HEAT_MODE) or self.options.get(CONF_HEAT_MODE) or DEFAULT_HEAT_MODE)
-        cool = str(data.get(CONF_COOL_MODE) or self.options.get(CONF_COOL_MODE) or DEFAULT_COOL_MODE)
+        # Prefer stored runtime state; do not fall back to options defaults
+        # (those are always "off" and would wipe a saved Confort on reload).
+        if CONF_HEAT_MODE in data:
+            heat = str(data.get(CONF_HEAT_MODE))
+        else:
+            heat = DEFAULT_HEAT_MODE
+        if CONF_COOL_MODE in data:
+            cool = str(data.get(CONF_COOL_MODE))
+        else:
+            cool = DEFAULT_COOL_MODE
         self._heat_mode = heat if heat in HEAT_MODES else DEFAULT_HEAT_MODE
         self._cool_mode = cool if cool in COOL_MODES else DEFAULT_COOL_MODE
-        self._auto_heat = bool(data.get(CONF_AUTO_HEAT, self.options.get(CONF_AUTO_HEAT, DEFAULT_AUTO_HEAT)))
-        self._auto_cool = bool(data.get(CONF_AUTO_COOL, self.options.get(CONF_AUTO_COOL, DEFAULT_AUTO_COOL)))
+        self._auto_heat = bool(data.get(CONF_AUTO_HEAT, DEFAULT_AUTO_HEAT))
+        self._auto_cool = bool(data.get(CONF_AUTO_COOL, DEFAULT_AUTO_COOL))
         raw_openings = data.get("opening_since") or {}
         for key, iso in raw_openings.items():
             try:
                 self._opening_since[key] = dt_util.parse_datetime(iso) or dt_util.utcnow()
             except (TypeError, ValueError):
                 continue
+        _LOGGER.debug(
+            "Climate state loaded: heat=%s cool=%s auto_heat=%s auto_cool=%s",
+            self._heat_mode,
+            self._cool_mode,
+            self._auto_heat,
+            self._auto_cool,
+        )
 
     async def _async_save(self) -> None:
         payload = {
@@ -207,50 +237,59 @@ class ClimateManager:
             },
         }
         await self._store.async_save(payload)
+        self._notify()
         if self._on_state_change:
             await self._on_state_change()
 
     async def async_set_heat_mode(self, mode: str, *, from_auto: bool = False) -> None:
-        mode = mode if mode in HEAT_MODES else DEFAULT_HEAT_MODE
-        if not from_auto and self._auto_heat:
-            self._auto_heat = False
-        self._heat_mode = mode
-        if mode != "off":
-            # Heating scene wins: turn cooling off.
-            self._cool_mode = "off"
-            self._last_applied_cool = None
-        await self._async_save()
-        await self.async_apply_heat_mode(mode)
+        async with self._lock:
+            mode = mode if mode in HEAT_MODES else DEFAULT_HEAT_MODE
+            if not from_auto:
+                self._eval_seq += 1
+                self._auto_heat = False
+            self._heat_mode = mode
+            if mode != "off":
+                # Heating scene wins: turn cooling off.
+                self._cool_mode = "off"
+                self._last_applied_cool = None
+            await self._async_save()
+            await self.async_apply_heat_mode(mode)
 
     async def async_set_cool_mode(self, mode: str, *, from_auto: bool = False) -> None:
-        mode = mode if mode in COOL_MODES else DEFAULT_COOL_MODE
-        if not from_auto and self._auto_cool:
-            self._auto_cool = False
-        # DRY is always manual — leave AUTO cool off.
-        if mode == "dry":
-            self._auto_cool = False
-        self._cool_mode = mode
-        if mode != "off":
-            self._heat_mode = "off"
-            self._last_applied_heat = None
-        await self._async_save()
-        await self.async_apply_cool_mode(mode)
+        async with self._lock:
+            mode = mode if mode in COOL_MODES else DEFAULT_COOL_MODE
+            if not from_auto:
+                self._eval_seq += 1
+                self._auto_cool = False
+            # DRY is always manual — leave AUTO cool off.
+            if mode == "dry":
+                self._auto_cool = False
+            self._cool_mode = mode
+            if mode != "off":
+                self._heat_mode = "off"
+                self._last_applied_heat = None
+            await self._async_save()
+            await self.async_apply_cool_mode(mode)
 
     async def async_set_auto_heat(self, enabled: bool) -> None:
-        self._auto_heat = bool(enabled)
-        if enabled:
-            self._auto_cool = False
-        await self._async_save()
+        async with self._lock:
+            self._auto_heat = bool(enabled)
+            if enabled:
+                self._auto_cool = False
+            self._eval_seq += 1
+            await self._async_save()
         if enabled:
             await self.async_evaluate()
 
     async def async_set_auto_cool(self, enabled: bool) -> None:
-        self._auto_cool = bool(enabled)
-        if enabled:
-            self._auto_heat = False
-            if self._cool_mode == "dry":
-                self._cool_mode = "off"
-        await self._async_save()
+        async with self._lock:
+            self._auto_cool = bool(enabled)
+            if enabled:
+                self._auto_heat = False
+                if self._cool_mode == "dry":
+                    self._cool_mode = "off"
+            self._eval_seq += 1
+            await self._async_save()
         if enabled:
             await self.async_evaluate()
 
@@ -443,31 +482,39 @@ class ClimateManager:
         if not self.enabled:
             return
 
-        self._applying_auto = True
-        try:
-            if self._auto_heat:
-                desired = self._desired_heat_mode()
-                if desired is not None:
-                    if desired != self._heat_mode or desired != self._last_applied_heat:
-                        await self.async_set_heat_mode(desired, from_auto=True)
-                    else:
-                        # Re-apply to honour openings that crossed the delay.
+        seq = self._eval_seq
+        async with self._lock:
+            if seq != self._eval_seq:
+                # A manual change happened while we were waiting — abort.
+                return
+
+            self._applying_auto = True
+            try:
+                if self._auto_heat:
+                    desired = self._desired_heat_mode()
+                    if desired is not None:
+                        self._heat_mode = desired
+                        if desired != "off":
+                            self._cool_mode = "off"
+                            self._last_applied_cool = None
+                        await self._async_save()
                         await self.async_apply_heat_mode(desired)
-            elif self._auto_cool:
-                if self._cool_mode == "dry":
-                    return
-                desired = self._desired_cool_mode()
-                if desired is not None:
-                    if desired != self._cool_mode or desired != self._last_applied_cool:
-                        await self.async_set_cool_mode(desired, from_auto=True)
-                    else:
+                elif self._auto_cool:
+                    if self._cool_mode == "dry":
+                        return
+                    desired = self._desired_cool_mode()
+                    if desired is not None:
+                        self._cool_mode = desired
+                        if desired != "off":
+                            self._heat_mode = "off"
+                            self._last_applied_heat = None
+                        await self._async_save()
                         await self.async_apply_cool_mode(desired)
-            else:
-                # Manual mode: still honour opening cut-off by re-applying.
-                if self._heat_mode != "off":
-                    await self.async_apply_heat_mode(self._heat_mode)
-                elif self._cool_mode not in ("off",):
-                    await self.async_apply_cool_mode(self._cool_mode)
-        finally:
-            self._applying_auto = False
-            await self._async_save()
+                else:
+                    # Manual mode: still honour opening cut-off by re-applying.
+                    if self._heat_mode != "off":
+                        await self.async_apply_heat_mode(self._heat_mode)
+                    elif self._cool_mode != "off":
+                        await self.async_apply_cool_mode(self._cool_mode)
+            finally:
+                self._applying_auto = False
