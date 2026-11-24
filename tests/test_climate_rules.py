@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from climate_rules import desired_cool_mode, desired_heat_mode, opening_is_blocking
+from climate_rules import (
+    desired_cool_mode,
+    desired_heat_mode,
+    is_night_hour,
+    opening_is_blocking,
+)
 
 
 def test_heat_on_confort_day_home() -> None:
@@ -117,6 +122,16 @@ def test_cool_jour_and_off() -> None:
         )
         == "off"
     )
+
+
+def test_night_window_21_to_6() -> None:
+    assert is_night_hour(20, night_start_hour=21, night_end_hour=6) is False
+    assert is_night_hour(21, night_start_hour=21, night_end_hour=6) is True
+    assert is_night_hour(23, night_start_hour=21, night_end_hour=6) is True
+    assert is_night_hour(0, night_start_hour=21, night_end_hour=6) is True
+    assert is_night_hour(5, night_start_hour=21, night_end_hour=6) is True
+    assert is_night_hour(6, night_start_hour=21, night_end_hour=6) is False
+    assert is_night_hour(12, night_start_hour=21, night_end_hour=6) is False
 
 
 def test_opening_delay() -> None:

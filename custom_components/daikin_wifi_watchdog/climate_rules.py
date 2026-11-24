@@ -81,6 +81,24 @@ def desired_cool_mode(
     return "jour"
 
 
+def is_night_hour(
+    hour: int,
+    *,
+    night_start_hour: int = 21,
+    night_end_hour: int = 6,
+) -> bool:
+    """True during the night window, e.g. 21:00–06:00 local."""
+    start = int(night_start_hour) % 24
+    end = int(night_end_hour) % 24
+    hour = int(hour) % 24
+    if start == end:
+        return False
+    if start > end:
+        # Wraps midnight: 21 → 6
+        return hour >= start or hour < end
+    return start <= hour < end
+
+
 def opening_is_blocking(
     *,
     is_open: bool,

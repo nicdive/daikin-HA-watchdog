@@ -52,6 +52,8 @@ from .const import (
     CONF_MAX_SOFT_REBOOTS_PER_DAY,
     CONF_NOTIFICATIONS_ENABLED,
     CONF_NOTIFY_SERVICE,
+    CONF_NIGHT_END_HOUR,
+    CONF_NIGHT_START_HOUR,
     CONF_OPENING_DELAY_SECONDS,
     CONF_OPENING_SENSORS,
     CONF_OUTDOOR_TEMP_SENSOR,
@@ -69,6 +71,8 @@ from .const import (
     DEFAULT_HARD_REBOOT_OFF_SECONDS,
     DEFAULT_HTTP_TIMEOUT,
     DEFAULT_MAX_SOFT_REBOOTS_PER_DAY,
+    DEFAULT_NIGHT_END_HOUR,
+    DEFAULT_NIGHT_START_HOUR,
     DEFAULT_NOTIFICATIONS_ENABLED,
     DEFAULT_REBOOT_COOLDOWN,
     DEFAULT_RELOAD_DAIKIN,
@@ -83,6 +87,8 @@ _CLIMATE_OPTION_KEYS = (
     CONF_OUTDOOR_TEMP_SENSOR,
     CONF_PRESENCE_SENSOR,
     CONF_SUN_ENTITY,
+    CONF_NIGHT_START_HOUR,
+    CONF_NIGHT_END_HOUR,
     CONF_OPENING_SENSORS,
     CONF_OPENING_DELAY_SECONDS,
     CONF_HEAT_PRESETS,
@@ -152,12 +158,6 @@ def _presence_selector() -> selector.EntitySelector:
     )
 
 
-def _sun_selector() -> selector.EntitySelector:
-    return selector.EntitySelector(
-        selector.EntitySelectorConfig(domain="sun", multiple=False)
-    )
-
-
 class DaikinWifiWatchdogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Single-instance config flow."""
 
@@ -200,6 +200,8 @@ class DaikinWifiWatchdogConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_OPENING_SENSORS: {},
                     CONF_OPENING_DELAY_SECONDS: DEFAULT_OPENING_DELAY_SECONDS,
                     CONF_SUN_ENTITY: DEFAULT_SUN_ENTITY,
+                    CONF_NIGHT_START_HOUR: DEFAULT_NIGHT_START_HOUR,
+                    CONF_NIGHT_END_HOUR: DEFAULT_NIGHT_END_HOUR,
                     CONF_HEAT_ON_SALON_BELOW: DEFAULT_HEAT_ON_SALON_BELOW,
                     CONF_HEAT_ON_OUTDOOR_BELOW: DEFAULT_HEAT_ON_OUTDOOR_BELOW,
                     CONF_HEAT_OFF_SALON_ABOVE: DEFAULT_HEAT_OFF_SALON_ABOVE,
@@ -277,6 +279,8 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
         self._pending.setdefault(CONF_OPENING_SENSORS, {})
         self._pending.setdefault(CONF_OPENING_DELAY_SECONDS, DEFAULT_OPENING_DELAY_SECONDS)
         self._pending.setdefault(CONF_SUN_ENTITY, DEFAULT_SUN_ENTITY)
+        self._pending.setdefault(CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR)
+        self._pending.setdefault(CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR)
 
     def _finish(self) -> FlowResult:
         return self.async_create_entry(title="", data=self._pending)
@@ -441,8 +445,14 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
                 user_input.get(CONF_PRESENCE_SENSOR) or ""
             )
             self._pending[CONF_SUN_ENTITY] = (
-                user_input.get(CONF_SUN_ENTITY) or DEFAULT_SUN_ENTITY
+                user_input.get(CONF_SUN_ENTITY)
+                or current.get(CONF_SUN_ENTITY)
+                or DEFAULT_SUN_ENTITY
             )
+            self._pending[CONF_NIGHT_START_HOUR] = int(
+                user_input[CONF_NIGHT_START_HOUR]
+            )
+            self._pending[CONF_NIGHT_END_HOUR] = int(user_input[CONF_NIGHT_END_HOUR])
             self._pending[CONF_OPENING_DELAY_SECONDS] = user_input[
                 CONF_OPENING_DELAY_SECONDS
             ]
@@ -490,7 +500,6 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
         salon = _opt(CONF_SALON_TEMP_SENSOR)
         outdoor = _opt(CONF_OUTDOOR_TEMP_SENSOR)
         presence = _opt(CONF_PRESENCE_SENSOR)
-        sun = _opt(CONF_SUN_ENTITY, DEFAULT_SUN_ENTITY)
         if salon:
             schema[vol.Optional(CONF_SALON_TEMP_SENSOR, default=salon)] = _sensor_selector()
         else:
@@ -507,7 +516,18 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
             )
         else:
             schema[vol.Optional(CONF_PRESENCE_SENSOR)] = _presence_selector()
-        schema[vol.Optional(CONF_SUN_ENTITY, default=sun)] = _sun_selector()
+        schema[
+            vol.Required(
+                CONF_NIGHT_START_HOUR,
+                default=int(_opt(CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR)),
+            )
+        ] = vol.All(vol.Coerce(int), vol.Range(min=0, max=23))
+        schema[
+            vol.Required(
+                CONF_NIGHT_END_HOUR,
+                default=int(_opt(CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR)),
+            )
+        ] = vol.All(vol.Coerce(int), vol.Range(min=0, max=23))
         schema[
             vol.Required(
                 CONF_OPENING_DELAY_SECONDS,

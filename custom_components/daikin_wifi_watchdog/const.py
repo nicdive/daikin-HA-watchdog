@@ -31,6 +31,8 @@ CONF_SALON_TEMP_SENSOR = "salon_temp_sensor"
 CONF_OUTDOOR_TEMP_SENSOR = "outdoor_temp_sensor"
 CONF_PRESENCE_SENSOR = "presence_sensor"
 CONF_SUN_ENTITY = "sun_entity"
+CONF_NIGHT_START_HOUR = "night_start_hour"
+CONF_NIGHT_END_HOUR = "night_end_hour"
 CONF_OPENING_SENSORS = "opening_sensors"
 CONF_OPENING_DELAY_SECONDS = "opening_delay_seconds"
 CONF_HEAT_PRESETS = "heat_presets"
@@ -63,6 +65,8 @@ DEFAULT_COOL_MODE = "off"
 DEFAULT_AUTO_HEAT = False
 DEFAULT_AUTO_COOL = False
 DEFAULT_SUN_ENTITY = "sun.sun"
+DEFAULT_NIGHT_START_HOUR = 21
+DEFAULT_NIGHT_END_HOUR = 6
 
 ERROR_CODES_UNHEALTHY = {255}
 

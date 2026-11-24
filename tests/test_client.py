@@ -66,7 +66,7 @@ def test_format_adapter_version() -> None:
 
 
 def test_integration_version_matches_manifest() -> None:
-    assert integration_version() == "1.4.3"
+    assert integration_version() == "1.4.4"
 
 
 def test_format_device_label() -> None:

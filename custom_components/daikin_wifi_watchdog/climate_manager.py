@@ -32,7 +32,12 @@ from .climate_defaults import (
     match_device_key,
     presets_from_dict,
 )
-from .climate_rules import desired_cool_mode, desired_heat_mode, opening_is_blocking
+from .climate_rules import (
+    desired_cool_mode,
+    desired_heat_mode,
+    is_night_hour,
+    opening_is_blocking,
+)
 from .client import DaikinWifiClient
 from .const import (
     CLIMATE_STORAGE_KEY,
@@ -51,18 +56,20 @@ from .const import (
     CONF_HEAT_ON_OUTDOOR_BELOW,
     CONF_HEAT_ON_SALON_BELOW,
     CONF_HEAT_PRESETS,
+    CONF_NIGHT_END_HOUR,
+    CONF_NIGHT_START_HOUR,
     CONF_OPENING_DELAY_SECONDS,
     CONF_OPENING_SENSORS,
     CONF_OUTDOOR_TEMP_SENSOR,
     CONF_PRESENCE_SENSOR,
     CONF_SALON_TEMP_SENSOR,
-    CONF_SUN_ENTITY,
     DEFAULT_AUTO_COOL,
     DEFAULT_AUTO_HEAT,
     DEFAULT_CLIMATE_ENABLED,
     DEFAULT_COOL_MODE,
     DEFAULT_HEAT_MODE,
-    DEFAULT_SUN_ENTITY,
+    DEFAULT_NIGHT_END_HOUR,
+    DEFAULT_NIGHT_START_HOUR,
     SIGNAL_CLIMATE_UPDATED,
 )
 from .coordinator import DaikinWatchdogCoordinator, TrackedModule
@@ -165,7 +172,6 @@ class ClimateManager:
                 self.options.get(CONF_SALON_TEMP_SENSOR),
                 self.options.get(CONF_OUTDOOR_TEMP_SENSOR),
                 self.options.get(CONF_PRESENCE_SENSOR),
-                self.options.get(CONF_SUN_ENTITY) or DEFAULT_SUN_ENTITY,
                 *list((self.options.get(CONF_OPENING_SENSORS) or {}).values()),
             )
             if entity_id
@@ -429,13 +435,16 @@ class ClimateManager:
         return value == "home"
 
     def _is_night(self) -> bool:
-        entity_id = self.options.get(CONF_SUN_ENTITY) or DEFAULT_SUN_ENTITY
-        state = self.hass.states.get(entity_id)
-        if state is None:
-            # Fallback: 22:00–07:00 local
-            hour = dt_util.now().hour
-            return hour >= 22 or hour < 7
-        return state.state == "below_horizon"
+        """Night scene window (local HA timezone), default 21:00–06:00."""
+        return is_night_hour(
+            dt_util.now().hour,
+            night_start_hour=int(
+                self.options.get(CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR)
+            ),
+            night_end_hour=int(
+                self.options.get(CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR)
+            ),
+        )
 
     def _desired_heat_mode(self) -> str | None:
         """Return target heat mode, or None when AUTO heat should stay idle."""
