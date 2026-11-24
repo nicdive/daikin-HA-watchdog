@@ -75,7 +75,7 @@
       },
       "heat_preset": {
         "title": "Heating · {mode} · {name}",
-        "description": "Setpoints for **{name}** ({host}) in heating scene **{mode}**.",
+        "description": "Setpoints for **{name}** in heating scene **{mode}**.",
         "data": {
           "power": "Unit on",
           "temperature": "Target temperature (°C)",
@@ -85,7 +85,7 @@
       },
       "cool_preset": {
         "title": "Cooling · {mode} · {name}",
-        "description": "Setpoints for **{name}** ({host}) in cooling scene **{mode}**.",
+        "description": "Setpoints for **{name}** in cooling scene **{mode}**.",
         "data": {
           "power": "Unit on",
           "temperature": "Target temperature (°C)",

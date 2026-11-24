@@ -75,7 +75,7 @@
       },
       "heat_preset": {
         "title": "Chauffage · {mode} · {name}",
-        "description": "Consignes pour **{name}** ({host}) en scène chauffage **{mode}**.",
+        "description": "Consignes pour **{name}** en scène chauffage **{mode}**.",
         "data": {
           "power": "Appareil allumé",
           "temperature": "Température de consigne (°C)",
@@ -85,7 +85,7 @@
       },
       "cool_preset": {
         "title": "Clim · {mode} · {name}",
-        "description": "Consignes pour **{name}** ({host}) en scène clim **{mode}**.",
+        "description": "Consignes pour **{name}** en scène clim **{mode}**.",
         "data": {
           "power": "Appareil allumé",
           "temperature": "Température de consigne (°C)",

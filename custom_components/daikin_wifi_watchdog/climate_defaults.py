@@ -31,6 +31,21 @@ DEVICE_TITLE_HINTS: dict[str, tuple[str, ...]] = {
 HEAT_MODES = ("off", "hors_gel", "confort", "eco", "nuit")
 COOL_MODES = ("off", "jour", "nuit", "eco", "dry")
 
+HEAT_MODE_LABELS = {
+    "off": "Off",
+    "hors_gel": "Hors-gel",
+    "confort": "Confort",
+    "eco": "Eco",
+    "nuit": "Nuit",
+}
+COOL_MODE_LABELS = {
+    "off": "Off",
+    "jour": "Jour",
+    "nuit": "Nuit",
+    "eco": "Eco",
+    "dry": "Déshumidification",
+}
+
 DAIKIN_MODE_HEAT = "4"
 DAIKIN_MODE_COOL = "3"
 DAIKIN_MODE_DRY = "2"

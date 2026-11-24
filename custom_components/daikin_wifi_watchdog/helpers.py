@@ -92,6 +92,99 @@ def format_device_label(name: str, area: str | None = None) -> str:
     return label
 
 
+def daikin_entry_display_name(hass: Any, entry: Any) -> str:
+    """Human label for a Daikin AC config entry (never the bare IP if avoidable)."""
+    from homeassistant.helpers import area_registry as ar
+    from homeassistant.helpers import device_registry as dr
+    from homeassistant.helpers import entity_registry as er
+
+    host = str((getattr(entry, "data", {}) or {}).get("host") or "")
+    title = str(getattr(entry, "title", "") or "")
+    entry_id = str(getattr(entry, "entry_id", "") or "")
+
+    candidates: list[str] = []
+    area_name: str | None = None
+
+    try:
+        ent_reg = er.async_get(hass)
+        for ent in er.async_entries_for_config_entry(ent_reg, entry_id):
+            if ent.domain != "climate":
+                continue
+            state = hass.states.get(ent.entity_id)
+            if state is not None and state.name:
+                candidates.append(state.name)
+            if ent.name:
+                candidates.append(ent.name)
+            if ent.original_name:
+                candidates.append(ent.original_name)
+            if ent.area_id:
+                area = ar.async_get(hass).async_get_area(ent.area_id)
+                if area:
+                    area_name = area.name
+            break
+    except Exception:  # noqa: BLE001
+        pass
+
+    try:
+        dev_reg = dr.async_get(hass)
+        devices = list(dr.async_entries_for_config_entry(dev_reg, entry_id))
+        devices.sort(
+            key=lambda device: (
+                0 if device.name_by_user else 1,
+                0 if device.area_id else 1,
+                device.name or "",
+            )
+        )
+        if devices:
+            device = devices[0]
+            if device.name_by_user:
+                candidates.insert(0, device.name_by_user)
+            if device.name:
+                candidates.append(device.name)
+            if not area_name and device.area_id:
+                area = ar.async_get(hass).async_get_area(device.area_id)
+                if area:
+                    area_name = area.name
+    except Exception:  # noqa: BLE001
+        pass
+
+    if title and not looks_like_host(title):
+        candidates.append(title)
+
+    # Known eedomus room keys matched by IP / title hints.
+    try:
+        from .climate_defaults import DEVICE_HOSTS, match_device_key
+
+        key = match_device_key(host, title) or match_device_key(
+            host, candidates[0] if candidates else None
+        )
+        pretty = {
+            "bureau": "Bureau",
+            "clara": "Chambre Clara",
+            "invites": "Chambre invités",
+            "louis": "Chambre Louis",
+            "cuisine": "Cuisine",
+            "salon": "Salon",
+            "suite": "Suite parentale",
+        }
+        if key and key in pretty:
+            candidates.append(pretty[key])
+        # Reverse host map
+        for slug, known_host in DEVICE_HOSTS.items():
+            if host == known_host and slug in pretty:
+                candidates.append(pretty[slug])
+    except Exception:  # noqa: BLE001
+        pass
+
+    name = next(
+        (candidate for candidate in candidates if candidate and not looks_like_host(candidate)),
+        None,
+    )
+    if not name:
+        name = title if title and not looks_like_host(title) else (area_name or host or entry_id)
+    return format_device_label(name, area_name)
+
+
 def module_url(host: str, path: str, *, https: bool = False) -> str:
     scheme = "https" if https else "http"
     if not path.startswith("/"):

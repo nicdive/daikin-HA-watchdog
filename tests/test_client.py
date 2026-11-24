@@ -66,7 +66,7 @@ def test_format_adapter_version() -> None:
 
 
 def test_integration_version_matches_manifest() -> None:
-    assert integration_version() == "1.4.5"
+    assert integration_version() == "1.4.6"
 
 
 def test_format_device_label() -> None:
@@ -75,6 +75,15 @@ def test_format_device_label() -> None:
     assert format_device_label("Clim Chambre parentale", "Chambre parentale") == (
         "Clim Chambre parentale"
     )
+
+
+def test_looks_like_host_rejects_ips() -> None:
+    from helpers import looks_like_host
+
+    assert looks_like_host("192.168.23.143")
+    assert looks_like_host("http://192.168.23.143")
+    assert not looks_like_host("Chambre Louis")
+    assert not looks_like_host("Salon")
 
 
 def test_reboot_timeout_with_empty_message_is_expected() -> None:

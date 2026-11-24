@@ -13,6 +13,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 
 from .climate_defaults import (
+    COOL_MODE_LABELS,
     COOL_MODES,
     DEFAULT_COOL_OFF_OUTDOOR_BELOW,
     DEFAULT_COOL_ON_OUTDOOR_ABOVE,
@@ -25,11 +26,13 @@ from .climate_defaults import (
     DEVICE_HOSTS,
     FAN_DIR_OPTIONS,
     FAN_RATE_OPTIONS,
+    HEAT_MODE_LABELS,
     HEAT_MODES,
     match_device_key,
     serialize_default_cool_presets,
     serialize_default_heat_presets,
 )
+from .helpers import daikin_entry_display_name
 from .const import (
     CONF_AUTO_REBOOT,
     CONF_CHECK_INTERVAL,
@@ -628,7 +631,7 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
             step_id="opening",
             data_schema=vol.Schema(schema),
             description_placeholders={
-                "name": entry.title or entry.entry_id,
+                "name": daikin_entry_display_name(self.hass, entry),
                 "host": str(entry.data.get(CONF_HOST) or ""),
             },
         )
@@ -667,7 +670,7 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
             return [
                 (
                     entry.entry_id,
-                    entry.title or str(entry.data.get(CONF_HOST) or entry.entry_id),
+                    daikin_entry_display_name(self.hass, entry),
                     str(entry.data.get(CONF_HOST) or "") or None,
                 )
                 for entry in entries
@@ -800,7 +803,7 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
             step_id="heat_preset",
             data_schema=vol.Schema(schema),
             description_placeholders={
-                "mode": mode,
+                "mode": HEAT_MODE_LABELS.get(mode, mode),
                 "name": title,
                 "host": host or "",
             },
@@ -882,7 +885,7 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
             step_id="cool_preset",
             data_schema=vol.Schema(schema),
             description_placeholders={
-                "mode": mode,
+                "mode": COOL_MODE_LABELS.get(mode, mode),
                 "name": title,
                 "host": host or "",
             },
