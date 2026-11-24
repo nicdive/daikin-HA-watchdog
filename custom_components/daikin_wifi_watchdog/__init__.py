@@ -30,6 +30,7 @@ from .climate_defaults import (
     serialize_default_heat_presets,
 )
 from .climate_manager import ClimateManager
+from .lovelace import schedule_dashboard_install
 from .preset_editor import PresetEditor
 from .const import (
     CONF_AUTO_REBOOT,
@@ -255,6 +256,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     )
     _register_services(hass)
+    schedule_dashboard_install(hass)
     return True
 
 

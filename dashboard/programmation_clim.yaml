@@ -1,12 +1,11 @@
-# Tableau de bord dédié — programmation chauffage / clim
+# Référence / copie manuelle (optionnelle).
 #
-# Installation :
-#   Paramètres → Tableaux de bord → Ajouter un tableau de bord
-#   → (trois points) Éditeur YAML brut → coller ce fichier
-#   ou : créer une vue dans un dashboard existant avec ce YAML.
+# Depuis v1.5, le dashboard est installé automatiquement dans la barre
+# latérale Home Assistant sous « Programmation Clim » (/daikin-programmation)
+# dès que l’intégration Daikin WiFi Watchdog est chargée.
 #
-# Après mise à jour de l’intégration (v1.5+), recharger
-# « Daikin WiFi Watchdog » pour créer les entités program_*.
+# Le YAML source livré dans le paquet :
+#   custom_components/daikin_wifi_watchdog/dashboards/programmation.yaml
 
 title: Programmation Clim
 icon: mdi:calendar-clock

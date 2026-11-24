@@ -41,9 +41,9 @@ Le watchdog pilote aussi les scènes chauffage / clim (remplacement eedomus) :
 
 **Configurer les capteurs AUTO :** Options → *Configurer la gestion chauffage / clim* (salon, extérieur, présence, ouvertures, plage nuit).
 
-**Modifier les consignes :** tableau de bord dédié [`dashboard/programmation_clim.yaml`](dashboard/programmation_clim.yaml) — choisir domaine → scène → appareil, puis régler temp / ventilo / oscillation.
+**Modifier les consignes :** le dashboard **Programmation Clim** s’installe tout seul dans la barre latérale (`/daikin-programmation`) au chargement de l’intégration — choisir domaine → scène → appareil, puis régler temp / ventilo / oscillation.
 
-**Dashboard pilotage :** [`dashboard/daikin_clim_chauffage.yaml`](dashboard/daikin_clim_chauffage.yaml)  
+**Dashboard pilotage (manuel) :** [`dashboard/daikin_clim_chauffage.yaml`](dashboard/daikin_clim_chauffage.yaml)  
 Paramètres → Tableaux de bord → Ajouter → ⋮ Éditeur brut → coller le YAML, puis adapter les `entity_id` climates / baies / capteurs.
 
 ## Entités globales

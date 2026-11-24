@@ -9,6 +9,8 @@
   "issue_tracker": "https://github.com/nicdive/daikin-HA-watchdog/issues",
   "version": "1.5.0",
   "after_dependencies": [
-    "daikin"
+    "daikin",
+    "frontend",
+    "lovelace"
   ]
 }
