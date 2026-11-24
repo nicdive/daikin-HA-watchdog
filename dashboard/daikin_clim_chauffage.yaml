@@ -19,14 +19,14 @@ sections:
         icon: mdi:thermostat-auto
 
       - type: tile
-        entity: switch.daikin_wifi_watchdog_auto_chauffage
+        entity: switch.daikin_wifi_watchdog_auto_heating
         name: AUTO chauffage
         icon: mdi:radiator
         features:
           - type: toggle
 
       - type: tile
-        entity: switch.daikin_wifi_watchdog_auto_clim
+        entity: switch.daikin_wifi_watchdog_auto_cooling
         name: AUTO clim
         icon: mdi:snowflake-thermometer
         features:
@@ -35,10 +35,10 @@ sections:
       - type: entities
         show_header_toggle: false
         entities:
-          - entity: select.daikin_wifi_watchdog_mode_chauffage
+          - entity: select.daikin_wifi_watchdog_heating_mode
             name: Mode chauffage
             icon: mdi:radiator
-          - entity: select.daikin_wifi_watchdog_mode_clim
+          - entity: select.daikin_wifi_watchdog_cooling_mode
             name: Mode clim
             icon: mdi:snowflake
 
