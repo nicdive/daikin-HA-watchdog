@@ -74,14 +74,24 @@
         }
       },
       "heat_preset": {
-        "title": "Scène chauffage : {mode}",
-        "description": "Consignes par appareil pour ce mode. Appareils : {devices}. Activer, température, silencieux optionnel.",
-        "data": {}
+        "title": "Chauffage · {mode} · {name}",
+        "description": "Consignes pour **{name}** ({host}) en scène chauffage **{mode}**.",
+        "data": {
+          "power": "Appareil allumé",
+          "temperature": "Température de consigne (°C)",
+          "fan_rate": "Ventilation",
+          "oscillation": "Oscillation (ailettes)"
+        }
       },
       "cool_preset": {
-        "title": "Scène clim : {mode}",
-        "description": "Consignes par appareil pour ce mode. Appareils : {devices}. Activer, température, silencieux optionnel.",
-        "data": {}
+        "title": "Clim · {mode} · {name}",
+        "description": "Consignes pour **{name}** ({host}) en scène clim **{mode}**.",
+        "data": {
+          "power": "Appareil allumé",
+          "temperature": "Température de consigne (°C)",
+          "fan_rate": "Ventilation",
+          "oscillation": "Oscillation (ailettes)"
+        }
       }
     }
   },

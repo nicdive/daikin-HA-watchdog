@@ -38,7 +38,13 @@ DAIKIN_MODE_DRY = "2"
 FAN_AUTO = "A"
 FAN_QUIET = "B"
 DIR_STOPPED = "0"
+DIR_VERTICAL = "1"
+DIR_HORIZONTAL = "2"
 DIR_BOTH = "3"
+
+# Values stored in presets / sent to Daikin local API.
+FAN_RATE_OPTIONS = ("A", "B", "3", "4", "5", "6", "7")
+FAN_DIR_OPTIONS = (DIR_STOPPED, DIR_VERTICAL, DIR_HORIZONTAL, DIR_BOTH)
 
 
 @dataclass(slots=True, frozen=True)

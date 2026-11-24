@@ -74,14 +74,24 @@
         }
       },
       "heat_preset": {
-        "title": "Heating scene: {mode}",
-        "description": "Per-unit setpoint for this heating mode. Devices: {devices}. Enable unit, set temperature, optionally quiet fan.",
-        "data": {}
+        "title": "Heating · {mode} · {name}",
+        "description": "Setpoints for **{name}** ({host}) in heating scene **{mode}**.",
+        "data": {
+          "power": "Unit on",
+          "temperature": "Target temperature (°C)",
+          "fan_rate": "Fan speed",
+          "oscillation": "Oscillation (louvers)"
+        }
       },
       "cool_preset": {
-        "title": "Cooling scene: {mode}",
-        "description": "Per-unit setpoint for this cooling mode. Devices: {devices}. Enable unit, set temperature, optionally quiet fan.",
-        "data": {}
+        "title": "Cooling · {mode} · {name}",
+        "description": "Setpoints for **{name}** ({host}) in cooling scene **{mode}**.",
+        "data": {
+          "power": "Unit on",
+          "temperature": "Target temperature (°C)",
+          "fan_rate": "Fan speed",
+          "oscillation": "Oscillation (louvers)"
+        }
       }
     }
   },
