@@ -30,6 +30,7 @@ from .climate_defaults import (
     serialize_default_heat_presets,
 )
 from .climate_manager import ClimateManager
+from .entity_cleanup import async_cleanup_stale_entities, async_ensure_hub_entity_ids
 from .lovelace import schedule_dashboard_install
 from .preset_editor import PresetEditor
 from .const import (
@@ -91,7 +92,6 @@ from .const import (
     SERVICE_REBOOT,
 )
 from .coordinator import DaikinWatchdogCoordinator
-from .entity_cleanup import async_cleanup_stale_entities
 from .helpers import integration_version
 
 REBOOT_SCHEMA = vol.Schema(
@@ -239,6 +239,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await climate.async_setup()
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     _async_update_hub_device(hass, entry)
+    async_ensure_hub_entity_ids(hass, entry)
     async_cleanup_stale_entities(hass, entry, coordinator)
 
     @callback
