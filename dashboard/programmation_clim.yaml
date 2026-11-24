@@ -1,0 +1,122 @@
+# Tableau de bord dédié — programmation chauffage / clim
+#
+# Installation :
+#   Paramètres → Tableaux de bord → Ajouter un tableau de bord
+#   → (trois points) Éditeur YAML brut → coller ce fichier
+#   ou : créer une vue dans un dashboard existant avec ce YAML.
+#
+# Après mise à jour de l’intégration (v1.5+), recharger
+# « Daikin WiFi Watchdog » pour créer les entités program_*.
+
+title: Programmation Clim
+icon: mdi:calendar-clock
+views:
+  - title: Consignes
+    path: consignes
+    icon: mdi:thermometer-lines
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Choisir quoi modifier
+            heading_style: title
+            icon: mdi:cursor-default-click
+
+          - type: markdown
+            content: |
+              1. Choisis **Chauffage** ou **Clim**
+              2. Choisis la **scène** (Confort, Eco, Nuit…)
+              3. Choisis l’**appareil** (Salon, Bureau…)
+              4. Règle allumage, température, ventilation, oscillation
+
+              Les valeurs sont enregistrées tout de suite.
+              Si la scène est déjà active, l’unité est mise à jour en direct.
+
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: select.daikin_wifi_watchdog_program_domain
+                name: Domaine
+              - entity: select.daikin_wifi_watchdog_program_scene
+                name: Scène
+              - entity: select.daikin_wifi_watchdog_program_device
+                name: Appareil
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Consignes de la sélection
+            heading_style: title
+            icon: mdi:tune-vertical
+
+          - type: tile
+            entity: switch.daikin_wifi_watchdog_program_power
+            name: Appareil allumé
+            features:
+              - type: toggle
+
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: number.daikin_wifi_watchdog_program_temperature
+                name: Température (°C)
+              - entity: select.daikin_wifi_watchdog_program_fan
+                name: Ventilation
+              - entity: select.daikin_wifi_watchdog_program_oscillation
+                name: Oscillation (ailettes)
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Modes actifs (maison)
+            heading_style: title
+            icon: mdi:home-thermometer
+
+          - type: tile
+            entity: switch.daikin_wifi_watchdog_auto_heat
+            name: AUTO chauffage
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.daikin_wifi_watchdog_auto_cool
+            name: AUTO clim
+            features:
+              - type: toggle
+
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: select.daikin_wifi_watchdog_heat_mode
+                name: Mode chauffage actuel
+              - entity: select.daikin_wifi_watchdog_cool_mode
+                name: Mode clim actuel
+
+  - title: Récap
+    path: recap
+    icon: mdi:view-dashboard-outline
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Astuce
+            heading_style: title
+            icon: mdi:information-outline
+
+          - type: markdown
+            content: |
+              **Programmation ≠ mode actuel**
+
+              - L’éditeur ci-dessus change la **fiche** d’une scène
+                (ex. Confort / Salon = 20 °C).
+              - Les selects « Mode chauffage / Mode clim » **appliquent**
+                une scène à toute la maison.
+
+              Exemple : monte Salon en Confort à 21 °C dans l’éditeur,
+              puis (re)sélectionne **Confort** dans Mode chauffage
+              si tu veux forcer l’envoi tout de suite — sinon l’unité
+              est déjà poussée si Confort est actif.

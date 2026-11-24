@@ -36,6 +36,21 @@
       },
       "cool_mode": {
         "default": "mdi:snowflake"
+      },
+      "program_domain": {
+        "default": "mdi:thermometer-lines"
+      },
+      "program_scene": {
+        "default": "mdi:calendar-clock"
+      },
+      "program_device": {
+        "default": "mdi:hvac"
+      },
+      "program_fan": {
+        "default": "mdi:fan"
+      },
+      "program_oscillation": {
+        "default": "mdi:arrow-oscillating"
       }
     },
     "switch": {
@@ -50,6 +65,14 @@
       },
       "auto_cool": {
         "default": "mdi:snowflake-thermometer"
+      },
+      "program_power": {
+        "default": "mdi:power"
+      }
+    },
+    "number": {
+      "program_temperature": {
+        "default": "mdi:thermometer"
       }
     }
   }

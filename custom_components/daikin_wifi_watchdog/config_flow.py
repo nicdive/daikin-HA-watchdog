@@ -13,8 +13,6 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 
 from .climate_defaults import (
-    COOL_MODE_LABELS,
-    COOL_MODES,
     DEFAULT_COOL_OFF_OUTDOOR_BELOW,
     DEFAULT_COOL_ON_OUTDOOR_ABOVE,
     DEFAULT_COOL_ON_SALON_ABOVE,
@@ -23,12 +21,6 @@ from .climate_defaults import (
     DEFAULT_HEAT_ON_OUTDOOR_BELOW,
     DEFAULT_HEAT_ON_SALON_BELOW,
     DEFAULT_OPENING_DELAY_SECONDS,
-    DEVICE_HOSTS,
-    FAN_DIR_OPTIONS,
-    FAN_RATE_OPTIONS,
-    HEAT_MODE_LABELS,
-    HEAT_MODES,
-    match_device_key,
     serialize_default_cool_presets,
     serialize_default_heat_presets,
 )
@@ -38,9 +30,7 @@ from .const import (
     CONF_CHECK_INTERVAL,
     CONF_CLIMATE_ENABLED,
     CONF_CONFIGURE_CLIMATE,
-    CONF_CONFIGURE_COOL_PRESETS,
     CONF_CONFIGURE_HARD_SWITCHES,
-    CONF_CONFIGURE_HEAT_PRESETS,
     CONF_COOL_OFF_OUTDOOR_BELOW,
     CONF_COOL_ON_OUTDOOR_ABOVE,
     CONF_COOL_ON_SALON_ABOVE,
@@ -264,13 +254,6 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
         self._hard_map: dict[str, str] = {}
         self._opening_map: dict[str, str] = {}
         self._index = 0
-        self._preset_modes: list[str] = []
-        self._preset_devices: list[tuple[str, str, str | None]] = []
-        self._preset_kind: str | None = None
-        self._preset_mode_index = 0
-        self._preset_device_index = 0
-        self._want_heat_presets = False
-        self._want_cool_presets = False
 
     def _entry(self) -> config_entries.ConfigEntry:
         return getattr(self, "config_entry", None) or self._config_entry
@@ -482,9 +465,6 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
             self._pending[CONF_COOL_OFF_OUTDOOR_BELOW] = user_input[
                 CONF_COOL_OFF_OUTDOOR_BELOW
             ]
-            self._want_heat_presets = bool(user_input.get(CONF_CONFIGURE_HEAT_PRESETS))
-            self._want_cool_presets = bool(user_input.get(CONF_CONFIGURE_COOL_PRESETS))
-
             daikin_entries = [
                 entry
                 for entry in self.hass.config_entries.async_entries(DAIKIN_DOMAIN)
@@ -597,9 +577,6 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
                 ),
             )
         ] = vol.Coerce(float)
-        schema[vol.Optional(CONF_CONFIGURE_HEAT_PRESETS, default=False)] = bool
-        schema[vol.Optional(CONF_CONFIGURE_COOL_PRESETS, default=False)] = bool
-
         return self.async_show_form(step_id="climate", data_schema=vol.Schema(schema))
 
     async def async_step_opening(
@@ -637,256 +614,6 @@ class DaikinWifiWatchdogOptionsFlow(config_entries.OptionsFlow):
         )
 
     async def _after_openings(self) -> FlowResult:
-        if self._want_heat_presets:
-            self._preset_kind = "heat"
-            self._preset_modes = [mode for mode in HEAT_MODES if mode != "off"]
-            self._preset_devices = self._devices_for_presets()
-            self._preset_mode_index = 0
-            self._preset_device_index = 0
-            if self._preset_devices:
-                return await self.async_step_heat_preset()
-        if self._want_cool_presets:
-            return await self._start_cool_presets()
+        # Scene setpoints are edited from the dedicated Lovelace dashboard.
         return self._finish()
 
-    async def _start_cool_presets(self) -> FlowResult:
-        self._preset_kind = "cool"
-        self._preset_modes = [mode for mode in COOL_MODES if mode != "off"]
-        self._preset_devices = self._devices_for_presets()
-        self._preset_mode_index = 0
-        self._preset_device_index = 0
-        if not self._preset_devices:
-            return self._finish()
-        return await self.async_step_cool_preset()
-
-    def _devices_for_presets(self) -> list[tuple[str, str, str | None]]:
-        """Return (storage_key, display_name, host) for each Daikin unit."""
-        entries = [
-            entry
-            for entry in self.hass.config_entries.async_entries(DAIKIN_DOMAIN)
-            if entry.source != config_entries.SOURCE_IGNORE
-        ]
-        if entries:
-            return [
-                (
-                    entry.entry_id,
-                    daikin_entry_display_name(self.hass, entry),
-                    str(entry.data.get(CONF_HOST) or "") or None,
-                )
-                for entry in entries
-            ]
-        return [(key, key.replace("_", " ").title(), host) for key, host in DEVICE_HOSTS.items()]
-
-    def _lookup_existing_setpoint(
-        self,
-        mode_presets: dict[str, Any],
-        storage_key: str,
-        host: str | None,
-        title: str,
-    ) -> dict[str, Any]:
-        if storage_key in mode_presets and isinstance(mode_presets[storage_key], dict):
-            return dict(mode_presets[storage_key])
-        if host and host in mode_presets and isinstance(mode_presets[host], dict):
-            return dict(mode_presets[host])
-        device_key = match_device_key(host, title)
-        if device_key and device_key in mode_presets and isinstance(
-            mode_presets[device_key], dict
-        ):
-            return dict(mode_presets[device_key])
-        return {}
-
-    def _fan_selector(self, default: str) -> selector.SelectSelector:
-        options = [
-            {"value": "A", "label": "Auto"},
-            {"value": "B", "label": "Silence"},
-            {"value": "3", "label": "Débit 1"},
-            {"value": "4", "label": "Débit 2"},
-            {"value": "5", "label": "Débit 3"},
-            {"value": "6", "label": "Débit 4"},
-            {"value": "7", "label": "Débit 5"},
-        ]
-        return selector.SelectSelector(
-            selector.SelectSelectorConfig(
-                options=options,
-                mode=selector.SelectSelectorMode.DROPDOWN,
-            )
-        )
-
-    def _oscillation_selector(self) -> selector.SelectSelector:
-        options = [
-            {"value": "0", "label": "Arrêt (pas d'oscillation)"},
-            {"value": "1", "label": "Oscillation verticale"},
-            {"value": "2", "label": "Oscillation horizontale"},
-            {"value": "3", "label": "Oscillation verticale + horizontale"},
-        ]
-        return selector.SelectSelector(
-            selector.SelectSelectorConfig(
-                options=options,
-                mode=selector.SelectSelectorMode.DROPDOWN,
-            )
-        )
-
-    def _advance_preset(self) -> str | None:
-        """Advance device/mode indexes. Return next step id or None when done."""
-        self._preset_device_index += 1
-        if self._preset_device_index < len(self._preset_devices):
-            return "same"
-        self._preset_device_index = 0
-        self._preset_mode_index += 1
-        if self._preset_mode_index < len(self._preset_modes):
-            return "same"
-        return None
-
-    async def async_step_heat_preset(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        mode = self._preset_modes[self._preset_mode_index]
-        storage_key, title, host = self._preset_devices[self._preset_device_index]
-        presets = dict(
-            self._pending.get(CONF_HEAT_PRESETS) or serialize_default_heat_presets()
-        )
-        mode_presets = dict(presets.get(mode) or {})
-        existing = self._lookup_existing_setpoint(mode_presets, storage_key, host, title)
-
-        if user_input is not None:
-            enabled = bool(user_input.get("power", False))
-            fan_rate = str(user_input.get("fan_rate") or "A")
-            if fan_rate not in FAN_RATE_OPTIONS:
-                fan_rate = "A"
-            fan_dir = str(user_input.get("oscillation") or "3")
-            if fan_dir not in FAN_DIR_OPTIONS:
-                fan_dir = "3"
-            if not enabled:
-                mode_presets[storage_key] = {
-                    "power": False,
-                    "temp": None,
-                    "mode": "4",
-                    "fan_rate": "A",
-                    "fan_dir": "3",
-                }
-            else:
-                mode_presets[storage_key] = {
-                    "power": True,
-                    "temp": float(user_input.get("temperature") or 18.0),
-                    "mode": "4",
-                    "fan_rate": fan_rate,
-                    "fan_dir": fan_dir,
-                }
-            presets[mode] = mode_presets
-            self._pending[CONF_HEAT_PRESETS] = presets
-            nxt = self._advance_preset()
-            if nxt == "same":
-                return await self.async_step_heat_preset()
-            if self._want_cool_presets:
-                return await self._start_cool_presets()
-            return self._finish()
-
-        power = bool(existing.get("power", False))
-        temp = existing.get("temp")
-        fan_rate = str(existing.get("fan_rate") or "A")
-        if fan_rate not in FAN_RATE_OPTIONS:
-            fan_rate = "A"
-        fan_dir = str(existing.get("fan_dir") or "3")
-        if fan_dir not in FAN_DIR_OPTIONS:
-            fan_dir = "3"
-
-        schema: dict[Any, Any] = {
-            vol.Required("power", default=power): bool,
-            vol.Required(
-                "temperature",
-                default=float(temp) if temp is not None else 18.0,
-            ): vol.All(vol.Coerce(float), vol.Range(min=10, max=32)),
-            vol.Required("fan_rate", default=fan_rate): self._fan_selector(fan_rate),
-            vol.Required("oscillation", default=fan_dir): self._oscillation_selector(),
-        }
-        return self.async_show_form(
-            step_id="heat_preset",
-            data_schema=vol.Schema(schema),
-            description_placeholders={
-                "mode": HEAT_MODE_LABELS.get(mode, mode),
-                "name": title,
-                "host": host or "",
-            },
-        )
-
-    async def async_step_cool_preset(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        mode = self._preset_modes[self._preset_mode_index]
-        storage_key, title, host = self._preset_devices[self._preset_device_index]
-        presets = dict(
-            self._pending.get(CONF_COOL_PRESETS) or serialize_default_cool_presets()
-        )
-        mode_presets = dict(presets.get(mode) or {})
-        existing = self._lookup_existing_setpoint(mode_presets, storage_key, host, title)
-
-        if user_input is not None:
-            enabled = bool(user_input.get("power", False))
-            fan_rate = str(user_input.get("fan_rate") or "A")
-            if fan_rate not in FAN_RATE_OPTIONS:
-                fan_rate = "A"
-            fan_dir = str(user_input.get("oscillation") or "3")
-            if fan_dir not in FAN_DIR_OPTIONS:
-                fan_dir = "3"
-            if mode == "dry":
-                mode_presets[storage_key] = {
-                    "power": enabled,
-                    "temp": None,
-                    "mode": "2",
-                    "fan_rate": fan_rate if enabled else "A",
-                    "fan_dir": fan_dir if enabled else "3",
-                }
-            elif not enabled:
-                mode_presets[storage_key] = {
-                    "power": False,
-                    "temp": None,
-                    "mode": "3",
-                    "fan_rate": "A",
-                    "fan_dir": "3",
-                }
-            else:
-                mode_presets[storage_key] = {
-                    "power": True,
-                    "temp": float(user_input.get("temperature") or 27.0),
-                    "mode": "3",
-                    "fan_rate": fan_rate,
-                    "fan_dir": fan_dir,
-                }
-            presets[mode] = mode_presets
-            self._pending[CONF_COOL_PRESETS] = presets
-            nxt = self._advance_preset()
-            if nxt == "same":
-                return await self.async_step_cool_preset()
-            return self._finish()
-
-        power = bool(existing.get("power", False))
-        temp = existing.get("temp")
-        fan_rate = str(existing.get("fan_rate") or "A")
-        if fan_rate not in FAN_RATE_OPTIONS:
-            fan_rate = "A"
-        fan_dir = str(existing.get("fan_dir") or "3")
-        if fan_dir not in FAN_DIR_OPTIONS:
-            fan_dir = "3"
-
-        schema: dict[Any, Any] = {
-            vol.Required("power", default=power): bool,
-        }
-        if mode != "dry":
-            schema[
-                vol.Required(
-                    "temperature",
-                    default=float(temp) if temp is not None else 27.0,
-                )
-            ] = vol.All(vol.Coerce(float), vol.Range(min=18, max=32))
-        schema[vol.Required("fan_rate", default=fan_rate)] = self._fan_selector(fan_rate)
-        schema[vol.Required("oscillation", default=fan_dir)] = self._oscillation_selector()
-
-        return self.async_show_form(
-            step_id="cool_preset",
-            data_schema=vol.Schema(schema),
-            description_placeholders={
-                "mode": COOL_MODE_LABELS.get(mode, mode),
-                "name": title,
-                "host": host or "",
-            },
-        )

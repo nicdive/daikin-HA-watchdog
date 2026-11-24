@@ -45,7 +45,7 @@
       },
       "climate": {
         "title": "Heating / cooling AUTO",
-        "description": "Sensors and thresholds used by AUTO chauffage and AUTO clim. Opening sensors are mapped on the next step.",
+        "description": "AUTO sensors, night window and openings. Scene setpoints (temperature / fan / swing) are edited from the **Programmation Clim** dashboard.",
         "data": {
           "climate_enabled": "Enable climate management",
           "salon_temp_sensor": "Living-room temperature sensor",
@@ -61,9 +61,7 @@
           "heat_off_outdoor_above": "Heat OFF if outdoor above (°C)",
           "cool_on_salon_above": "Cool ON if living-room above (°C)",
           "cool_on_outdoor_above": "Cool ON if outdoor above (°C)",
-          "cool_off_outdoor_below": "Cool OFF if outdoor below (°C)",
-          "configure_heat_presets": "Edit heating scene setpoints",
-          "configure_cool_presets": "Edit cooling scene setpoints"
+          "cool_off_outdoor_below": "Cool OFF if outdoor below (°C)"
         }
       },
       "opening": {
@@ -71,26 +69,6 @@
         "description": "Bay / window binary sensor for **{name}** ({host}). Leave empty if none (WC / bathroom windows are not used).",
         "data": {
           "opening_sensor": "Opening sensor"
-        }
-      },
-      "heat_preset": {
-        "title": "Heating · {mode} · {name}",
-        "description": "Setpoints for **{name}** in heating scene **{mode}**.",
-        "data": {
-          "power": "Unit on",
-          "temperature": "Target temperature (°C)",
-          "fan_rate": "Fan speed",
-          "oscillation": "Oscillation (louvers)"
-        }
-      },
-      "cool_preset": {
-        "title": "Cooling · {mode} · {name}",
-        "description": "Setpoints for **{name}** in cooling scene **{mode}**.",
-        "data": {
-          "power": "Unit on",
-          "temperature": "Target temperature (°C)",
-          "fan_rate": "Fan speed",
-          "oscillation": "Oscillation (louvers)"
         }
       }
     }
@@ -154,6 +132,48 @@
           "eco": "Eco",
           "dry": "Dry"
         }
+      },
+      "program_domain": {
+        "name": "Program · domain",
+        "state": {
+          "heat": "Heating",
+          "cool": "Cooling"
+        }
+      },
+      "program_scene": {
+        "name": "Program · scene",
+        "state": {
+          "hors_gel": "Frost protection",
+          "confort": "Comfort",
+          "eco": "Eco",
+          "nuit": "Night",
+          "jour": "Day",
+          "dry": "Dry"
+        }
+      },
+      "program_device": {
+        "name": "Program · device"
+      },
+      "program_fan": {
+        "name": "Program · fan",
+        "state": {
+          "A": "Auto",
+          "B": "Quiet",
+          "3": "Speed 1",
+          "4": "Speed 2",
+          "5": "Speed 3",
+          "6": "Speed 4",
+          "7": "Speed 5"
+        }
+      },
+      "program_oscillation": {
+        "name": "Program · swing",
+        "state": {
+          "0": "Off",
+          "1": "Vertical",
+          "2": "Horizontal",
+          "3": "Vertical + horizontal"
+        }
       }
     },
     "switch": {
@@ -168,6 +188,14 @@
       },
       "auto_cool": {
         "name": "AUTO cooling"
+      },
+      "program_power": {
+        "name": "Program · power"
+      }
+    },
+    "number": {
+      "program_temperature": {
+        "name": "Program · setpoint"
       }
     }
   },
