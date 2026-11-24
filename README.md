@@ -26,6 +26,21 @@ Aucune saisie d’IP manuelle. Les identifiants locaux (mot de passe / UUID) dé
 
 Dans les options, tu peux associer une **prise par climatisation** (le formulaire affiche le nom de l’unité) et choisir ton **notify Companion**.
 
+## Chauffage & clim (v1.4+)
+Le watchdog pilote aussi les scènes chauffage / clim (remplacement eedomus) :
+
+| Entité | Rôle |
+|--------|------|
+| `select.*_mode_chauffage` | Off / Hors-gel / Confort / Eco / Nuit |
+| `select.*_mode_clim` | Off / Jour / Nuit / Eco / Déshum |
+| `switch.*_auto_chauffage` | AUTO règles chauffage |
+| `switch.*_auto_clim` | AUTO règles clim |
+
+**Configurer :** Options de l’intégration → *Configurer la gestion chauffage / clim* (capteurs salon / extérieur / présence, ouvertures par pièce, consignes).
+
+**Dashboard prêt à coller :** [`dashboard/daikin_clim_chauffage.yaml`](dashboard/daikin_clim_chauffage.yaml)  
+Paramètres → Tableaux de bord → Ajouter → ⋮ Éditeur brut → coller le YAML, puis adapter les `entity_id` (climates Daikin, baies, capteurs).
+
 ## Entités globales
 | Entité | Rôle |
 |--------|------|
