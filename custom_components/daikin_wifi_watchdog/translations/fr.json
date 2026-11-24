@@ -32,7 +32,8 @@
           "hard_reboot_off_seconds": "Durée d'extinction de la prise (secondes)",
           "reload_daikin": "Recharger Daikin AC après reboot",
           "notify_service": "Notify mobile",
-          "configure_hard_switches": "Configurer les prises de hard-reboot"
+          "configure_hard_switches": "Configurer les prises de hard-reboot",
+          "configure_climate": "Configurer la gestion chauffage / clim"
         }
       },
       "hard_switch": {
@@ -41,6 +42,44 @@
         "data": {
           "hard_reboot_switch": "Prise connectée"
         }
+      },
+      "climate": {
+        "title": "AUTO chauffage / clim",
+        "description": "Capteurs et seuils pour AUTO chauffage et AUTO clim. Les ouvertures (baies / fenêtre bureau) se configurent à l'étape suivante.",
+        "data": {
+          "climate_enabled": "Activer la gestion chauffage / clim",
+          "salon_temp_sensor": "Température salon",
+          "outdoor_temp_sensor": "Température extérieure",
+          "presence_sensor": "Présence (person / binaire)",
+          "sun_entity": "Entité soleil (jour / nuit)",
+          "opening_delay_seconds": "Délai ouverture avant coupure (secondes)",
+          "heat_on_salon_below": "Chauffage ON si salon sous (°C)",
+          "heat_on_outdoor_below": "Chauffage ON si extérieur sous (°C)",
+          "heat_off_salon_above": "Chauffage OFF si salon au-dessus (°C)",
+          "heat_off_outdoor_above": "Chauffage OFF si extérieur au-dessus (°C)",
+          "cool_on_salon_above": "Clim ON si salon au-dessus (°C)",
+          "cool_on_outdoor_above": "Clim ON si extérieur au-dessus (°C)",
+          "cool_off_outdoor_below": "Clim OFF si extérieur sous (°C)",
+          "configure_heat_presets": "Modifier les consignes chauffage",
+          "configure_cool_presets": "Modifier les consignes clim"
+        }
+      },
+      "opening": {
+        "title": "Capteur d'ouverture",
+        "description": "Baie / fenêtre pour **{name}** ({host}). Laisser vide si aucune (WC / SDB non concernés).",
+        "data": {
+          "opening_sensor": "Capteur d'ouverture"
+        }
+      },
+      "heat_preset": {
+        "title": "Scène chauffage : {mode}",
+        "description": "Consignes par appareil pour ce mode. Appareils : {devices}. Activer, température, silencieux optionnel.",
+        "data": {}
+      },
+      "cool_preset": {
+        "title": "Scène clim : {mode}",
+        "description": "Consignes par appareil pour ce mode. Appareils : {devices}. Activer, température, silencieux optionnel.",
+        "data": {}
       }
     }
   },
@@ -83,12 +122,40 @@
         "name": "Hard-reboot du module WiFi"
       }
     },
+    "select": {
+      "heat_mode": {
+        "name": "Mode chauffage",
+        "state": {
+          "off": "Off",
+          "hors_gel": "Hors-gel",
+          "confort": "Confort",
+          "eco": "Eco",
+          "nuit": "Nuit"
+        }
+      },
+      "cool_mode": {
+        "name": "Mode clim",
+        "state": {
+          "off": "Off",
+          "jour": "Jour",
+          "nuit": "Nuit",
+          "eco": "Eco",
+          "dry": "Déshumidification"
+        }
+      }
+    },
     "switch": {
       "watchdog_enabled": {
         "name": "Watchdog activé"
       },
       "notifications_enabled": {
         "name": "Notifications plantage/reboot"
+      },
+      "auto_heat": {
+        "name": "AUTO chauffage"
+      },
+      "auto_cool": {
+        "name": "AUTO clim"
       }
     }
   },
@@ -124,6 +191,30 @@
     "check_now": {
       "name": "Vérifier maintenant",
       "description": "Lance immédiatement un cycle de surveillance."
+    },
+    "apply_heat_mode": {
+      "name": "Appliquer mode chauffage",
+      "description": "Applique une scène chauffage à toutes les unités Daikin.",
+      "fields": {
+        "mode": {
+          "name": "Mode",
+          "description": "Mode chauffage (optionnel, utilise le select courant sinon)."
+        }
+      }
+    },
+    "apply_cool_mode": {
+      "name": "Appliquer mode clim",
+      "description": "Applique une scène clim à toutes les unités Daikin.",
+      "fields": {
+        "mode": {
+          "name": "Mode",
+          "description": "Mode clim (optionnel, utilise le select courant sinon)."
+        }
+      }
+    },
+    "climate_evaluate": {
+      "name": "Évaluer AUTO clim/chauffage",
+      "description": "Lance immédiatement les règles AUTO chauffage / clim."
     }
   },
   "issues": {

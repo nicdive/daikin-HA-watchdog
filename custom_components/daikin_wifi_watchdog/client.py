@@ -165,6 +165,72 @@ class DaikinWifiClient:
         parsed = parse_daikin_response(text[:_MAX_BODY_CHARS])
         return parsed or {"ret": "OK"}
 
+    async def _get_with_params(
+        self,
+        host: str,
+        path: str,
+        creds: ModuleCredentials | None,
+        extra_params: dict[str, str],
+        *,
+        https: bool,
+    ) -> str:
+        params = dict(self._params(creds))
+        params.update(extra_params)
+        kwargs: dict[str, Any] = {
+            "timeout": self._timeout,
+            "headers": self._headers(creds),
+            "params": params or None,
+        }
+        if https:
+            kwargs["ssl"] = False
+        async with self._session.get(module_url(host, path, https=https), **kwargs) as response:
+            if response.status >= 400:
+                response.raise_for_status()
+            return await response.text()
+
+    async def set_control_info(
+        self,
+        host: str,
+        *,
+        power: bool,
+        mode: str | None = None,
+        temp: float | None = None,
+        fan_rate: str | None = None,
+        fan_dir: str | None = None,
+        humidity: str = "0",
+        creds: ModuleCredentials | None = None,
+    ) -> dict[str, Any]:
+        """Apply /aircon/set_control_info (local Daikin REST)."""
+        params: dict[str, str] = {"pow": "1" if power else "0"}
+        if power:
+            if mode is not None:
+                params["mode"] = str(mode)
+            if temp is not None:
+                # Daikin expects one decimal place (e.g. 20.0).
+                params["stemp"] = f"{float(temp):.1f}"
+            params["shum"] = humidity
+            if fan_rate is not None:
+                params["f_rate"] = str(fan_rate)
+            if fan_dir is not None:
+                params["f_dir"] = str(fan_dir)
+
+        prefer_https = bool(creds and creds.use_https)
+        try:
+            text = await self._get_with_params(
+                host, "/aircon/set_control_info", creds, params, https=prefer_https
+            )
+        except ClientError:
+            if creds is None:
+                raise
+            text = await self._get_with_params(
+                host, "/aircon/set_control_info", creds, params, https=not prefer_https
+            )
+        data = parse_daikin_response(text[:_MAX_BODY_CHARS])
+        ret = data.get("ret")
+        if ret not in (None, "OK"):
+            raise RuntimeError(f"Invalid set_control_info response: {text[:200]}")
+        return data or {"ret": "OK"}
+
     async def check_health(
         self,
         host: str,
