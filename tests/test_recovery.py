@@ -49,7 +49,7 @@ def test_soft_reboot_on_error_code() -> None:
     )
 
 
-def test_unreachable_without_plug_waits() -> None:
+def test_unreachable_without_plug_tries_soft_reboot() -> None:
     assert (
         decide_recovery(
             status=HealthStatus.UNREACHABLE,
@@ -57,6 +57,21 @@ def test_unreachable_without_plug_waits() -> None:
             consecutive_failures=3,
             failures_needed=3,
             soft_reboots_today=0,
+            max_soft_reboots=6,
+            has_hard_switch=False,
+        )
+        is RecoveryAction.SOFT
+    )
+
+
+def test_unreachable_without_plug_waits_after_quota() -> None:
+    assert (
+        decide_recovery(
+            status=HealthStatus.UNREACHABLE,
+            auto_reboot=True,
+            consecutive_failures=3,
+            failures_needed=3,
+            soft_reboots_today=6,
             max_soft_reboots=6,
             has_hard_switch=False,
         )

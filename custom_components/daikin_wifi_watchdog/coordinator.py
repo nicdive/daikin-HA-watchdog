@@ -95,6 +95,7 @@ class ModuleRuntimeState:
     last_reboot: datetime | None = None
     last_reboot_kind: str | None = None
     last_ok_notified: bool = True
+    wait_notified: bool = False
     recovery_in_progress: bool = False
 
 
@@ -552,6 +553,7 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
                     )
             state.consecutive_failures = 0
             state.last_ok_notified = True
+            state.wait_notified = False
             self._async_clear_issue(module.entry_id)
             return self._snapshot(module, state, result)
 
@@ -701,6 +703,33 @@ class DaikinWatchdogCoordinator(DataUpdateCoordinator[dict[str, ModuleSnapshot]]
                         )
                     ),
                 )
+            if not state.wait_notified:
+                state.wait_notified = True
+                if status is HealthStatus.UNREACHABLE:
+                    await self._async_notify(
+                        self._msg("Daikin WiFi injoignable", "Daikin WiFi unreachable"),
+                        self._msg(
+                            f"{self._module_label(module)} ne répond plus après "
+                            f"{state.soft_reboots_today} soft reboot(s). "
+                            "Configure une prise de hard-reboot dans les options.",
+                            f"{self._module_label(module)} is still unreachable after "
+                            f"{state.soft_reboots_today} soft reboot(s). "
+                            "Configure a hard-reboot switch in the options.",
+                        ),
+                    )
+                else:
+                    await self._async_notify(
+                        self._msg(
+                            "Daikin WiFi quota soft reboot",
+                            "Daikin WiFi soft reboot quota",
+                        ),
+                        self._msg(
+                            f"{self._module_label(module)} : quota soft reboot atteint, "
+                            "pas de prise hard-reboot configurée.",
+                            f"{self._module_label(module)}: soft reboot quota reached, "
+                            "no hard-reboot switch configured.",
+                        ),
+                    )
             return
 
         if action is RecoveryAction.HARD:
