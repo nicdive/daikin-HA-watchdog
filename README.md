@@ -70,10 +70,10 @@ Un export **Diagnostics** est disponible sur l’entrée d’intégration (utile
 1. Poll parallèle `http(s)://IP/common/basic_info` (IP + auth lues depuis Daikin AC)
 2. Un timeout unique est retenté 1 s plus tard pour éviter les faux positifs
 3. Si `err=255` ou injoignable → compteur d’échecs
-4. Après N échecs → soft reboot `GET /common/reboot` (les timeouts/coupures TCP pendant le reboot sont considérés comme un succès)
+4. Après N échecs → soft reboot `GET /common/reboot` (y compris si injoignable **sans** prise ; les timeouts/coupures TCP pendant le reboot sont considérés comme un succès)
 5. Recharge ensuite l’entrée Daikin AC pour reconnecter l’intégration
-6. Optionnel : prise `switch.*` en secours (power-cycle, durée réglable)
-7. Quota journalier, cooldown, et issues HA si le module reste injoignable sans prise
+6. Optionnel : prise `switch.*` en secours (power-cycle immédiat si injoignable, ou après quota soft)
+7. Quota journalier, cooldown, notification + issue HA si le module reste injoignable sans prise
 
 ## Services
 ```yaml
