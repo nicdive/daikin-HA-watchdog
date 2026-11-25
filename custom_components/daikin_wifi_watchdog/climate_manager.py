@@ -100,6 +100,10 @@ class ClimateManager:
         self._cool_mode = DEFAULT_COOL_MODE
         self._auto_heat = DEFAULT_AUTO_HEAT
         self._auto_cool = DEFAULT_AUTO_COOL
+        # True only after AUTO stopped heat/cool because an OFF threshold fired.
+        # Prevents "sticky off" after reload when mode defaults to off in the dead-band.
+        self._heat_off_latched = False
+        self._cool_off_latched = False
         self._applying_auto = False
         self._opening_since: dict[str, datetime] = {}
         self._last_applied_heat: str | None = None
@@ -218,6 +222,10 @@ class ClimateManager:
         self._cool_mode = cool if cool in COOL_MODES else DEFAULT_COOL_MODE
         self._auto_heat = bool(data.get(CONF_AUTO_HEAT, DEFAULT_AUTO_HEAT))
         self._auto_cool = bool(data.get(CONF_AUTO_COOL, DEFAULT_AUTO_COOL))
+        # Missing latch after upgrade: do not treat stored "off" as threshold-stop,
+        # so dead-band can resume heating (avoids sticky off after reload).
+        self._heat_off_latched = bool(data.get("heat_off_latched", False))
+        self._cool_off_latched = bool(data.get("cool_off_latched", False))
         raw_openings = data.get("opening_since") or {}
         for key, iso in raw_openings.items():
             try:
@@ -225,11 +233,14 @@ class ClimateManager:
             except (TypeError, ValueError):
                 continue
         _LOGGER.debug(
-            "Climate state loaded: heat=%s cool=%s auto_heat=%s auto_cool=%s",
+            "Climate state loaded: heat=%s cool=%s auto_heat=%s auto_cool=%s "
+            "heat_off_latched=%s cool_off_latched=%s",
             self._heat_mode,
             self._cool_mode,
             self._auto_heat,
             self._auto_cool,
+            self._heat_off_latched,
+            self._cool_off_latched,
         )
 
     async def _async_save(self) -> None:
@@ -238,6 +249,8 @@ class ClimateManager:
             CONF_COOL_MODE: self._cool_mode,
             CONF_AUTO_HEAT: self._auto_heat,
             CONF_AUTO_COOL: self._auto_cool,
+            "heat_off_latched": self._heat_off_latched,
+            "cool_off_latched": self._cool_off_latched,
             "opening_since": {
                 key: value.isoformat() for key, value in self._opening_since.items()
             },
@@ -257,6 +270,8 @@ class ClimateManager:
             if mode != "off":
                 # Heating scene wins: turn cooling off.
                 self._cool_mode = "off"
+                self._heat_off_latched = False
+                self._cool_off_latched = False
                 self._last_applied_cool = None
             await self._async_save()
             await self.async_apply_heat_mode(mode)
@@ -273,6 +288,8 @@ class ClimateManager:
             self._cool_mode = mode
             if mode != "off":
                 self._heat_mode = "off"
+                self._cool_off_latched = False
+                self._heat_off_latched = False
                 self._last_applied_heat = None
             await self._async_save()
             await self.async_apply_cool_mode(mode)
@@ -466,6 +483,7 @@ class ClimateManager:
             heat_off_outdoor_above=float(
                 self.options.get(CONF_HEAT_OFF_OUTDOOR_ABOVE, DEFAULT_HEAT_OFF_OUTDOOR_ABOVE)
             ),
+            off_latched=self._heat_off_latched,
         )
 
     def _desired_cool_mode(self) -> str | None:
@@ -484,7 +502,43 @@ class ClimateManager:
             cool_off_outdoor_below=float(
                 self.options.get(CONF_COOL_OFF_OUTDOOR_BELOW, DEFAULT_COOL_OFF_OUTDOOR_BELOW)
             ),
+            off_latched=self._cool_off_latched,
         )
+
+    def _heat_off_threshold_hit(self) -> bool:
+        salon = self._sensor_float(self.options.get(CONF_SALON_TEMP_SENSOR))
+        outdoor = self._sensor_float(self.options.get(CONF_OUTDOOR_TEMP_SENSOR))
+        if outdoor is not None and outdoor > float(
+            self.options.get(CONF_HEAT_OFF_OUTDOOR_ABOVE, DEFAULT_HEAT_OFF_OUTDOOR_ABOVE)
+        ):
+            return True
+        if salon is not None and salon > float(
+            self.options.get(CONF_HEAT_OFF_SALON_ABOVE, DEFAULT_HEAT_OFF_SALON_ABOVE)
+        ):
+            return True
+        return False
+
+    def _cool_off_threshold_hit(self) -> bool:
+        outdoor = self._sensor_float(self.options.get(CONF_OUTDOOR_TEMP_SENSOR))
+        if outdoor is None:
+            return False
+        return outdoor < float(
+            self.options.get(CONF_COOL_OFF_OUTDOOR_BELOW, DEFAULT_COOL_OFF_OUTDOOR_BELOW)
+        )
+
+    def _update_heat_off_latch(self, desired: str) -> None:
+        if desired == "off":
+            if self._heat_off_threshold_hit():
+                self._heat_off_latched = True
+        else:
+            self._heat_off_latched = False
+
+    def _update_cool_off_latch(self, desired: str) -> None:
+        if desired == "off":
+            if self._cool_off_threshold_hit():
+                self._cool_off_latched = True
+        else:
+            self._cool_off_latched = False
 
     async def async_evaluate(self) -> None:
         """Run AUTO rules and re-apply openings overrides."""
@@ -502,9 +556,11 @@ class ClimateManager:
                 if self._auto_heat:
                     desired = self._desired_heat_mode()
                     if desired is not None:
+                        self._update_heat_off_latch(desired)
                         self._heat_mode = desired
                         if desired != "off":
                             self._cool_mode = "off"
+                            self._cool_off_latched = False
                             self._last_applied_cool = None
                         await self._async_save()
                         await self.async_apply_heat_mode(desired)
@@ -513,9 +569,11 @@ class ClimateManager:
                         return
                     desired = self._desired_cool_mode()
                     if desired is not None:
+                        self._update_cool_off_latch(desired)
                         self._cool_mode = desired
                         if desired != "off":
                             self._heat_mode = "off"
+                            self._heat_off_latched = False
                             self._last_applied_heat = None
                         await self._async_save()
                         await self.async_apply_cool_mode(desired)

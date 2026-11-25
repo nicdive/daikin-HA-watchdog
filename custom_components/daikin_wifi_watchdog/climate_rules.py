@@ -16,8 +16,15 @@ def desired_heat_mode(
     heat_on_outdoor_below: float,
     heat_off_salon_above: float,
     heat_off_outdoor_above: float,
+    off_latched: bool = False,
 ) -> str | None:
-    """Return target heat mode, or None when sensors are missing and idle."""
+    """Return target heat mode, or None when sensors are missing and idle.
+
+    ``off_latched`` is True only after AUTO previously turned heating off because
+    an OFF threshold was crossed. In the dead-band, a latched off stays off
+    (hysteresis). An unlatched off (reload / default / lost state) may turn
+    heating back on while temperatures are still below the OFF thresholds.
+    """
     should_off = False
     if outdoor is not None and outdoor > heat_off_outdoor_above:
         should_off = True
@@ -35,9 +42,14 @@ def desired_heat_mode(
         if salon is None and outdoor is None:
             return None
         if current_mode != "off":
+            # Dead-band: keep heating scene.
             should_on = True
-        else:
+        elif off_latched:
+            # Dead-band after a real OFF-threshold stop: stay off until ON.
             return "off"
+        else:
+            # Dead-band while off without latch (e.g. after reload): resume heat.
+            should_on = True
 
     if presence_home is False:
         return "eco"
@@ -56,6 +68,7 @@ def desired_cool_mode(
     cool_on_salon_above: float,
     cool_on_outdoor_above: float,
     cool_off_outdoor_below: float,
+    off_latched: bool = False,
 ) -> str | None:
     """Return target cool mode, or None when sensors are missing and idle."""
     if outdoor is not None and outdoor < cool_off_outdoor_below:
@@ -71,8 +84,10 @@ def desired_cool_mode(
             return None
         if current_mode not in ("off", "dry"):
             should_on = True
-        else:
+        elif off_latched:
             return "off"
+        else:
+            should_on = True
 
     if presence_home is False:
         return "eco"

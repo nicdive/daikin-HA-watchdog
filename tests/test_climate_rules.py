@@ -95,6 +95,43 @@ def test_heat_deadband_keeps_current() -> None:
     )
 
 
+def test_heat_deadband_latched_off_stays_off() -> None:
+    assert (
+        desired_heat_mode(
+            salon=22,
+            outdoor=16,
+            presence_home=True,
+            is_night=False,
+            current_mode="off",
+            heat_on_salon_below=21,
+            heat_on_outdoor_below=14,
+            heat_off_salon_above=24,
+            heat_off_outdoor_above=19,
+            off_latched=True,
+        )
+        == "off"
+    )
+
+
+def test_heat_deadband_unlatched_off_resumes_after_reload() -> None:
+    """After reload, mode may be off without OFF-threshold latch → resume heat."""
+    assert (
+        desired_heat_mode(
+            salon=21.8,
+            outdoor=16.5,
+            presence_home=False,
+            is_night=True,
+            current_mode="off",
+            heat_on_salon_below=21,
+            heat_on_outdoor_below=14,
+            heat_off_salon_above=24,
+            heat_off_outdoor_above=19,
+            off_latched=False,
+        )
+        == "eco"
+    )
+
+
 def test_cool_jour_and_off() -> None:
     assert (
         desired_cool_mode(
